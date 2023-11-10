@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<!--<PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>-->
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<developmentDependency>true</developmentDependency>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>All</AnalysisMode>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Authors>Paul Brätz</Authors>
+		<Description>
+			Generate hybrid (tagged/type) union types.
+		</Description>
+		<Copyright>2023</Copyright>
+		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
+		<Version>0.0.0-alpha.0</Version>
+		<PackageId>RhoMicro.Unions</PackageId>
+		<Company>RhoMicro</Company>
+		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
+		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<!--'.0' required for auto source gen updater-->
+		<AssemblyName>$(MSBuildProjectName).12</AssemblyName>
+		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<WarningsAsErrors>$(WarningsAsErrors);NU1605;1591;1573;1712;nullable</WarningsAsErrors>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<WarningsAsErrors>$(WarningsAsErrors);NU1605;1591;1573;1712;nullable</WarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove=".editorconfig"></None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\RhoMicro.Unions\SubsetOfAttribute.cs" Link="Attributes\SubsetOfAttribute.cs" />
+		<Compile Include="..\RhoMicro.Unions\SupersetOfAttribute.cs" Link="Attributes\SupersetOfAttribute.cs" />
+		<Compile Include="..\RhoMicro.Unions\UnionTypeAttribute.cs" Link="Attributes\UnionTypeAttribute.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
+		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Resources\Diagnostics.en.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Diagnostics.en.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Resources\Diagnostics.en.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Diagnostics.en.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<!--Required for source gen auto updater-->
+	<!--AutoUpdateAssemblyName-->
+</Project>
