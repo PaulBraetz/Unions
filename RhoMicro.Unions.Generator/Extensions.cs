@@ -13,10 +13,14 @@ internal static class Extensions
 {
     public static Boolean IsError(this Diagnostic diagnostic) =>
         diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
+    public static Boolean HasUnionTypeAttribute(this ITypeSymbol symbol) =>
+        symbol.GetAttributes().Any();
     public static String ToFullString(this ITypeSymbol symbol) =>
         symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     public static StringBuilder AppendSymbol(this StringBuilder builder, ITypeSymbol symbol) =>
         builder.Append(symbol.ToFullString());
-    public static Boolean HasUnionTypeAttribute(this ITypeSymbol symbol) =>
-        symbol.GetAttributes().Any();
+    public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
+        this IncrementalValuesProvider<SourceCarry<TSource>> provider,
+        Func<TSource, DiagnosticsModelBuilder, SourceModelBuilder, CancellationToken, TResult> project) =>
+        provider.Select((c, t) => c.Project((s, d, b) => project.Invoke(s, d, b, t)));
 }

@@ -2,6 +2,8 @@
 
 namespace RhoMicro.Unions.Generator;
 
+using Microsoft.CodeAnalysis;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,18 +16,24 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
     private ConversionOperatorModel(String sourceText) => SourceText = sourceText;
 
     public static ConversionOperatorModel Create(
-        TargetModel target,
+        ITypeSymbol symbol,
         UnionTypeAttribute attribute)
     {
-        var sourceTextBuilder = new StringBuilder("public static implicit operator ")
-            .AppendSymbol(target.Symbol)
+        var sourceTextBuilder = new StringBuilder()
+            .AppendLine("/// <summary>")
+            .Append("/// Converts an instance of <see cref=\"").AppendSymbol(attribute.RepresentableTypeSymbol).Append("\"/> to the union type <see cref=\"").AppendSymbol(symbol).AppendLine("\"/>.")
+            .AppendLine("/// <summary>")
+            .AppendLine("/// <param name=\"value\">The value to convert.<param>")
+            .AppendLine("/// <returns>The converted value.<returns>")
+            .Append("public static implicit operator ")
+            .AppendSymbol(symbol)
             .Append('(')
             .AppendSymbol(attribute.RepresentableTypeSymbol)
             .AppendLine(" value) => new(value);")
             .Append("public static explicit operator ")
             .AppendSymbol(attribute.RepresentableTypeSymbol)
             .Append('(')
-            .AppendSymbol(target.Symbol)
+            .AppendSymbol(symbol)
             .Append(" union) => union._tag == Tag.")
             .Append(attribute.SafeAlias)
             .Append('?');
@@ -39,7 +47,9 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
 
         _ = sourceTextBuilder
             .Append(':')
-            .Append(ConstantSources.InvalidTagStateThrow)
+            .Append(String.Format(
+                ConstantSources.InvalidExplicitCastThrow,
+                attribute.RepresentableTypeSymbol.ToFullString()))
             .Append(';');
 
         var sourceText = sourceTextBuilder.ToString();
@@ -49,24 +59,25 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
     }
 
     public static ConversionOperatorModel Create(
-        TypeDeclarationAttributeAggregate aggregate,
+        ITypeSymbol symbol,
+        IEnumerable<UnionTypeAttribute> unionTypeAttributes,
         SupersetOfAttribute attribute)
     {
         var sourceTextBuilder = new StringBuilder("public static implicit operator ")
-            .AppendSymbol(aggregate.Target.Symbol)
+            .AppendSymbol(symbol)
             .Append('(')
             .AppendSymbol(attribute.SubsetUnionTypeSymbol)
             .Append(" subsetUnion) => subsetUnion.DownCast<")
-            .AppendSymbol(aggregate.Target.Symbol)
+            .AppendSymbol(symbol)
             .AppendLine(">();")
             .Append("public static explicit operator ")
             .AppendSymbol(attribute.SubsetUnionTypeSymbol)
             .Append('(')
-            .AppendSymbol(aggregate.Target.Symbol)
+            .AppendSymbol(symbol)
             .AppendLine(" union) => union._tag switch")
             .AppendLine("{");
 
-        foreach(var unionTypeAttribute in aggregate.UnionTypeAttributes)
+        foreach (var unionTypeAttribute in unionTypeAttributes)
         {
             _ = sourceTextBuilder.Append("Tag.")
                 .Append(unionTypeAttribute.SafeAlias)
@@ -93,7 +104,8 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
     }
 
     public static ConversionOperatorModel Create(
-        TypeDeclarationAttributeAggregate aggregate,
+        ITypeSymbol symbol,
+        IReadOnlyCollection<UnionTypeAttribute> unionTypeAttributes,
         SubsetOfAttribute attribute)
     {
         //public static implicit operator Union(SubsetUnion subset) => subset.Match(static v => v);
@@ -101,9 +113,9 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
         var sourceTextBuilder = new StringBuilder("public static implicit operator ")
             .AppendSymbol(attribute.SupersetUnionTypeSymbol)
             .Append('(')
-            .AppendSymbol(aggregate.Target.Symbol)
+            .AppendSymbol(symbol)
             .Append(" subsetUnion) => subsetUnion.Match(")
-            .Append(String.Join(",", Enumerable.Repeat("static v => v", aggregate.UnionTypeAttributes.Count)))
+            .Append(String.Join(",", Enumerable.Repeat("static v => v", unionTypeAttributes.Count)))
             .AppendLine(");")
             /*
             public static explicit operator SubsetUnion(Union union) =>
@@ -114,12 +126,12 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
                    static v => throw new InvalidOperationException());
             */
             .Append("public static explicit operator ")
-            .AppendSymbol(aggregate.Target.Symbol)
+            .AppendSymbol(symbol)
             .Append('(')
             .AppendSymbol(attribute.SupersetUnionTypeSymbol)
             .AppendLine(" union) => union.Match(");
 
-        foreach(var _ in attribute.SupersetUnionTypeSymbol.GetAttributes().OfUnionTypeAttribute())
+        foreach (var _ in attribute.SupersetUnionTypeSymbol.GetAttributes().OfUnionTypeAttribute())
         {
             //TODO
         }

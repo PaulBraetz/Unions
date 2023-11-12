@@ -31,20 +31,23 @@ Console.WriteLine(converted);
 
 [UnionType(typeof(String))]
 class NonPartialUnion { }
+
 [SubsetOf(typeof(String))]
 partial class MissingAttributeUnion { }
 
 [UnionType(typeof(String))]
 [UnionType(typeof(String))]
-[UnionType(typeof(String))]
 partial class DuplicateUnion { }
+
+[UnionType(typeof(String))]
+record RecordUnion { }
 
 [UnionType(typeof(Int32))]
 [UnionType(typeof(String))]
 [UnionType(typeof(Byte))]
 [UnionType(typeof(List<Double>))]
 [SupersetOf(typeof(SubsetUnion))]
-partial struct Union
+readonly partial struct Union
 {
 
 }
@@ -134,9 +137,7 @@ partial struct Union :
         _valueTypeContainer.ByteValue = byteValue;
     }
     #endregion
-    #region Fields & Constants
-    private const Tag _firstValueTypeTag = Tag.Int32;
-
+    #region Fields
     private readonly Tag _tag;
     //generate this on condition of possible reference type value
     private readonly Object _referenceTypeContainer;
@@ -185,7 +186,7 @@ partial struct Union :
     #region ToString
 #nullable restore
     public override readonly String? ToString() =>
-        _tag < _firstValueTypeTag ?
+        _tag < Tag.Int32 ?
             _referenceTypeContainer?.ToString() :
             _tag switch
             {
@@ -228,7 +229,7 @@ partial struct Union :
     #endregion
     #region Equality & Hashing
     public override readonly Int32 GetHashCode() =>
-        _tag < _firstValueTypeTag ?
+        _tag < Tag.Int32 ?
             _referenceTypeContainer?.GetHashCode() ?? 0 :
             _tag switch
             {

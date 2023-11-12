@@ -11,6 +11,7 @@ using System;
 [GenerateFactory]
 public partial class UnionTypeAttribute
 {
+    [ExcludeConstructor]
     public UnionTypeAttribute(Object representableTypeSymbolContainer) =>
         _representableTypeSymbolContainer = representableTypeSymbolContainer;
 
