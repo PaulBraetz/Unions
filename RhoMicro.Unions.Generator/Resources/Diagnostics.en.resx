@@ -129,6 +129,24 @@
   <data name="GeneratorException_Title" xml:space="preserve">
     <value>Unexpected Generator Error</value>
   </data>
+  <data name="ImplicitConversionOptionOnNonSolitary_Message" xml:space="preserve">
+    <value>The `ImplicitConversionIfSolitary` option will be ignored because the target union type may represent more than one type.</value>
+  </data>
+  <data name="ImplicitConversionOptionOnNonSolitary_Title" xml:space="preserve">
+    <value>Union Type Option Ignored</value>
+  </data>
+  <data name="ImplicitConversionOptionOnSolitary_Message" xml:space="preserve">
+    <value>The interface implementation for `{0}` was omitted because the `ImplicitConversionIfSolitary` option was used.</value>
+  </data>
+  <data name="ImplicitConversionOptionOnSolitary_Title" xml:space="preserve">
+    <value>Omitting Interface Implementation</value>
+  </data>
+  <data name="InvalidAttributeTarget_Message" xml:space="preserve">
+    <value>Only type declarations may be annotated with union type attributes.</value>
+  </data>
+  <data name="InvalidAttributeTarget_Title" xml:space="preserve">
+    <value>Invalid Attribute Target</value>
+  </data>
   <data name="MissingUnionTypeAttribute_Message" xml:space="preserve">
     <value>Union types must be declared using at least one instance of the 'UnionType' attribute.</value>
   </data>

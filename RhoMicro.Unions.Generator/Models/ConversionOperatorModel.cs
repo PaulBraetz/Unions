@@ -1,14 +1,17 @@
 ﻿//TODO: continue here
 
-namespace RhoMicro.Unions.Generator;
+namespace RhoMicro.Unions.Generator.Models;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Operations;
+
+using RhoMicro.Unions;
+using RhoMicro.Unions.Generator;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
 {
     public readonly String SourceText;
@@ -16,41 +19,62 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
     private ConversionOperatorModel(String sourceText) => SourceText = sourceText;
 
     public static ConversionOperatorModel Create(
-        ITypeSymbol symbol,
-        UnionTypeAttribute attribute)
+        ITypeSymbol target,
+        UnionTypeAttribute attribute,
+        IReadOnlyCollection<UnionTypeAttribute> allAttributes)
     {
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// <summary>")
-            .Append("/// Converts an instance of <see cref=\"").AppendSymbol(attribute.RepresentableTypeSymbol).Append("\"/> to the union type <see cref=\"").AppendSymbol(symbol).AppendLine("\"/>.")
-            .AppendLine("/// <summary>")
-            .AppendLine("/// <param name=\"value\">The value to convert.<param>")
-            .AppendLine("/// <returns>The converted value.<returns>")
+            .Append("/// Converts an instance of <see cref=\"").AppendSymbol(attribute.RepresentableTypeSymbol).Append("\"/> to the union type <see cref=\"").AppendSymbol(target).AppendLine("\"/>.")
+            .AppendLine("/// </summary>")
+            .AppendLine("/// <param name=\"value\">The value to convert.</param>")
+            .AppendLine("/// <returns>The converted value.</returns>")
             .Append("public static implicit operator ")
-            .AppendSymbol(symbol)
+            .AppendSymbol(target)
             .Append('(')
             .AppendSymbol(attribute.RepresentableTypeSymbol)
-            .AppendLine(" value) => new(value);")
-            .Append("public static explicit operator ")
-            .AppendSymbol(attribute.RepresentableTypeSymbol)
-            .Append('(')
-            .AppendSymbol(symbol)
-            .Append(" union) => union._tag == Tag.")
-            .Append(attribute.SafeAlias)
-            .Append('?');
+            .AppendLine(" value) => new(value);");
 
-        _ = attribute.RepresentableTypeSymbol.IsReferenceType
-            ? sourceTextBuilder.Append('(')
+        var generateSolitaryExplicit = allAttributes.Count > 1 || !attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary);
+        if(generateSolitaryExplicit)
+        {
+            _ = sourceTextBuilder
+                .Append("public static explicit operator ")
                 .AppendSymbol(attribute.RepresentableTypeSymbol)
-                .Append(")union._referenceTypeContainer")
-            : sourceTextBuilder.Append("union._valueTypeContainer.")
-                .Append(attribute.SafeAlias);
+                .Append('(')
+                .AppendSymbol(target)
+                .Append(" union) => ");
 
-        _ = sourceTextBuilder
-            .Append(':')
-            .Append(String.Format(
-                ConstantSources.InvalidExplicitCastThrow,
-                attribute.RepresentableTypeSymbol.ToFullString()))
-            .Append(';');
+            if(allAttributes.Count > 1)
+            {
+                _ = sourceTextBuilder
+                    .Append("union.__tag == Tag.")
+                    .Append(attribute.SafeAlias)
+                    .Append('?');
+            }
+
+            _ = sourceTextBuilder.Append(attribute.GetInstanceVariableExpression(target, "union"));
+
+            if(allAttributes.Count > 1)
+            {
+                _ = sourceTextBuilder
+                    .Append(':')
+                    .Append(String.Format(
+                        ConstantSources.InvalidExplicitCastThrow,
+                        attribute.RepresentableTypeSymbol.ToFullString()));
+            }
+
+            _ = sourceTextBuilder.Append(';');
+        } else
+        {
+            _ = sourceTextBuilder.Append("public static implicit operator ")
+                .Append(attribute.RepresentableTypeSymbol.ToFullString())
+                .Append('(')
+                .Append(target.Name)
+                .Append(" union) => ")
+                .Append(attribute.GetInstanceVariableExpression(target, "union"))
+                .AppendLine(";");
+        }
 
         var sourceText = sourceTextBuilder.ToString();
         var result = new ConversionOperatorModel(sourceText);
@@ -74,16 +98,16 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
             .AppendSymbol(attribute.SubsetUnionTypeSymbol)
             .Append('(')
             .AppendSymbol(symbol)
-            .AppendLine(" union) => union._tag switch")
+            .AppendLine(" union) => union.__tag switch")
             .AppendLine("{");
 
-        foreach (var unionTypeAttribute in unionTypeAttributes)
+        foreach(var unionTypeAttribute in unionTypeAttributes)
         {
             _ = sourceTextBuilder.Append("Tag.")
                 .Append(unionTypeAttribute.SafeAlias)
                 .Append(" => ")
                 .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-                .Append("union._");
+                .Append("union.__");
 
             _ = unionTypeAttribute.RepresentableTypeSymbol.IsValueType ?
                 sourceTextBuilder.Append("valueTypeContainer.")
@@ -131,7 +155,7 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
             .AppendSymbol(attribute.SupersetUnionTypeSymbol)
             .AppendLine(" union) => union.Match(");
 
-        foreach (var _ in attribute.SupersetUnionTypeSymbol.GetAttributes().OfUnionTypeAttribute())
+        foreach(var _ in attribute.SupersetUnionTypeSymbol.GetAttributes().OfUnionTypeAttribute())
         {
             //TODO
         }

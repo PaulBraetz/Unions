@@ -1,8 +1,27 @@
-﻿#nullable enable
+﻿#if GENERATOR
+#pragma warning disable CS8618
+#endif
+
 namespace RhoMicro.Unions;
 
 using System;
 using System.Collections.Generic;
+
+/// <summary>
+/// Defines options for generating union types.
+/// </summary>
+[Flags]
+public enum UnionTypeOptions
+{
+    /// <summary>
+    /// </summary>
+    None = 0b0,
+    /// <summary>
+    /// Instructs the generator to emit an implicit conversion to the representable type if it is the only one.
+    /// In effect, this option will enable the union type to act as an alias wrapper for the representable type.
+    /// </summary>
+    ImplicitConversionIfSolitary = 0b1
+}
 
 /// <summary>
 /// Marks the target type as a union type being able to represent the type passed to the constructor.
@@ -27,6 +46,11 @@ public sealed partial class UnionTypeAttribute : Attribute
     /// name collisions in generated code.
     /// </summary>
     public String? Alias { get; set; }
+
+    /// <summary>
+    /// Gets or sets the generator options to use.
+    /// </summary>
+    public UnionTypeOptions Options { get; set; }
 
     /// <summary>
     /// Gets the type representable by the target union type.

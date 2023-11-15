@@ -1,4 +1,7 @@
-﻿#nullable enable
+﻿#if GENERATOR
+#pragma warning disable CS8618
+#endif
+
 namespace RhoMicro.Unions;
 
 using System;

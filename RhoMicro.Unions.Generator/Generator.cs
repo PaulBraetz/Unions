@@ -3,6 +3,8 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using RhoMicro.Unions.Generator.Models;
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,76 +15,45 @@ public sealed class Generator : IIncrementalGenerator
     {
         var handledTargets = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         var models = context.SyntaxProvider.CreateSyntaxProvider(
-                GeneratorUtilities.IsUnionDeclaration,
-                (c, t) =>
-                {
-                    t.ThrowIfCancellationRequested();
-
-                    if (c.Node is not TypeDeclarationSyntax target)
-                    {
-                        return new SourceCarry<(SemanticModel SemanticModel, TypeDeclarationSyntax Target, ITypeSymbol Symbol)>();
-                    }
-
-                    var semanticModel = c.SemanticModel;
-                    var symbol = semanticModel.GetDeclaredSymbol(target, t) as ITypeSymbol;
-
-                    if (!handledTargets.Add(symbol))
-                    {
-                        return new SourceCarry<(SemanticModel SemanticModel, TypeDeclarationSyntax Target, ITypeSymbol Symbol)>();
-                    }
-
-                    var diagnostics = new DiagnosticsModelBuilder();
-                    var source = new SourceModelBuilder();
-
-                    source.SetTarget(symbol);
-
-                    diagnostics.DiagnoseTarget(target, semanticModel, t);
-
-                    return new SourceCarry<(SemanticModel SemanticModel, TypeDeclarationSyntax Target, ITypeSymbol Symbol)>(
-                        (SemanticModel: semanticModel, Target: target, Symbol: symbol),
-                        diagnostics,
-                        source);
-                })
-            .SelectCarry((c, d, b, t) =>
-            {
-                var attributeData = c.Symbol.GetAttributes();
-
-                var unionAttributes = attributeData.OfUnionTypeAttribute()
-                        .OrderBy(a => a.RepresentableTypeSymbol.ToFullString())
-                        .ToArray();
-                var supersetUnionAttributes = attributeData.OfSubsetOfAttribute()
-                        .OrderBy(a => a.SupersetUnionTypeSymbol.ToFullString())
-                        .ToArray();
-                var subsetUnionAttributes = attributeData.OfSubsetOfAttribute()
-                        .OrderBy(a => a.SupersetUnionTypeSymbol.ToFullString())
-                        .ToArray();
-
-                return (
-                    c.Symbol,
-                    c.Target,
-                    c.SemanticModel,
-                    UnionAttributes: unionAttributes,
-                    SupersetUnionAttributes: supersetUnionAttributes,
-                    SubsetUnionAttributes: subsetUnionAttributes
-                    );
-            })
-            .SelectCarry((c, d, b, t) =>
-            {
-                var models = c.UnionAttributes
-                    .Select(a =>
-                        ConversionOperatorModel.Create(c.Symbol, a))
-                    //.Concat(
-                    //    c.SupersetUnionAttributes.Select(a =>
-                    //        ConversionOperatorModel.Create(c.Symbol, c.UnionAttributes, a)))
-                    //.Concat(
-                    //    c.SupersetUnionAttributes.Select(a =>
-                    //        ConversionOperatorModel.Create(c.Symbol, c.UnionAttributes, a)))
-                    ;
-
-                b.SetOperators(models);
-
-                return c;
-            });
+            GeneratorUtilities.IsUnionDeclaration,
+            SourceCarry<ModelFactoryParameters>.Create)
+            .SelectCarry(
+                c => c.Parameters,
+                c => c.Diagnostics.DiagnoseAll(c.Model, c.CancellationToken))
+            .SelectCarry((c, d, s, t) => (Context: c, IsFirst: handledTargets.Add(c.TargetSymbol)))
+            .Where(c => !c.HasContext || c.Context.IsFirst)
+            .SelectCarry((c, d, s, t) => c.Context)
+            .SelectCarry(
+                c => c.Parameters.TargetSymbol,
+                c => c.Source.SetTarget(c.Model))
+            .SelectCarry(
+                c => c.Parameters.Attributes.AllUnionTypeAttributes
+                    .Select(a => ConversionOperatorModel.Create(c.Parameters.TargetSymbol, a, c.Parameters.Attributes.AllUnionTypeAttributes)),
+                c => c.Source.SetOperators(c.Model))
+            .SelectCarry(
+                ConstructorsModel.Create,
+                ConstructorsModel.Integrate)
+            .SelectCarry(
+                NestedTypesModel.Create,
+                NestedTypesModel.Integrate)
+            .SelectCarry(
+                FieldsModel.Create,
+                FieldsModel.Integrate)
+            .SelectCarry(
+                ToStringFunctionModel.Create,
+                ToStringFunctionModel.Integrate)
+            .SelectCarry(
+                InterfaceImplementationModel.Create,
+                InterfaceImplementationModel.Integrate)
+            .SelectCarry(
+                GetHashcodeFunctionModel.Create,
+                GetHashcodeFunctionModel.Integrate)
+            .SelectCarry(
+                EqualsFunctionsModel.Create,
+                EqualsFunctionsModel.Integrate)
+            .SelectCarry(
+                DownCastFunctionModel.Create,
+                DownCastFunctionModel.Integrate);
 
         context.RegisterSourceOutput(models, (c, sc) => sc.AddToContext(c));
     }

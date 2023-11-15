@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Threading;
 using RhoMicro.Unions;
+using System.Reflection;
 
 sealed class DiagnosticsModelBuilder
 {
@@ -28,7 +29,7 @@ sealed class DiagnosticsModelBuilder
 
         public void AddToContext(SourceProductionContext context)
         {
-            foreach (var diagnostic in _diagnostics)
+            foreach(var diagnostic in _diagnostics)
             {
                 context.ReportDiagnostic(diagnostic);
             }
@@ -38,7 +39,7 @@ sealed class DiagnosticsModelBuilder
     private readonly ICollection<Diagnostic> _diagnostics = new List<Diagnostic>();
     private readonly Object _syncRoot = new();
 
-    public readonly Boolean IsError;
+    public Boolean IsError { get; private set; }
 
     private DiagnosticsModelBuilder(ICollection<Diagnostic> diagnostics)
     {
@@ -48,57 +49,107 @@ sealed class DiagnosticsModelBuilder
 
     public DiagnosticsModelBuilder() : this(new List<Diagnostic>()) { }
 
-    public void ValidatePartiality(TypeDeclarationSyntax typeDeclaration)
+    public void DiagnoseInvalidTargetNode(SyntaxNode node, CancellationToken token)
     {
-        if (typeDeclaration.IsPartial())
-            return;
+        token.ThrowIfCancellationRequested();
 
-        var location = typeDeclaration.Identifier.GetLocation();
-        var diagnostics = Diagnostics.NonPartialDeclaration.Create(location);
-        _ = Add(diagnostics);
-    }
-    public void ValidateNonStatic(TypeDeclarationSyntax typeDeclaration)
-    {
-        if (!typeDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
-            return;
-
-        var location = typeDeclaration.Identifier.GetLocation();
-        var diagnostics = Diagnostics.StaticTarget.Create(location);
-        _ = Add(diagnostics);
-    }
-    public void ValidateNonRecord(TypeDeclarationSyntax typeDeclaration)
-    {
-        if (!typeDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
-            !typeDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
+        if(node is TypeDeclarationSyntax)
         {
             return;
         }
 
-        var location = typeDeclaration.Identifier.GetLocation();
-        var diagnostics = Diagnostics.RecordTarget.Create(location);
-        _ = Add(diagnostics);
+        var location = node.GetLocation();
+        var diagnostic = Diagnostics.InvalidAttributeTarget(location);
+        _ = Add(diagnostic);
     }
-    public void ValidateUnionTypeAttribute(TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
+    public void DiagnoseImplicitConversionIfSolitary(ModelFactoryParameters context, CancellationToken token)
     {
-        var symbol = semanticModel.GetDeclaredSymbol(typeDeclaration) as ITypeSymbol;
-        if (symbol.HasUnionTypeAttribute())
+        token.ThrowIfCancellationRequested();
+
+        var attributes = context.Attributes.AllUnionTypeAttributes;
+        var location = context.TargetDeclaration.GetLocation();
+
+        if(attributes.Count == 1 &&
+           attributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary))
+        {
+            var diagnostic = Diagnostics.ImplicitConversionOptionOnSolitary(
+                context.TargetSymbol.Name,
+                attributes[0].RepresentableTypeSymbol.Name,
+                location);
+            _ = Add(diagnostic);
+        } else if(attributes.Count > 1 &&
+           attributes.Any(a => a.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
+        {
+            var diagnostic = Diagnostics.ImplicitConversionOptionOnNonSolitary(location);
+            _ = Add(diagnostic);
+        }
+    }
+    public void DiagnoseUnionTypeCount(ModelFactoryParameters context, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+
+        var count = context.Attributes.AllUnionTypeAttributes.Count;
+        if(count <= Byte.MaxValue)
             return;
 
-        var location = typeDeclaration.Identifier.GetLocation();
-        var diagnostics = Diagnostics.MissingUnionTypeAttribute.Create(location);
+        var location = context.TargetDeclaration.GetLocation();
+        var diagnostics = Diagnostics.TooManyTypes(location);
         _ = Add(diagnostics);
     }
-    public void ValidateUniqueUnionTypeAttributes(
-        TypeDeclarationSyntax typeDeclaration,
-        SemanticModel semanticModel)
+    public void DiagnosePartiality(ModelFactoryParameters context, CancellationToken token)
     {
-        var symbol = semanticModel.GetDeclaredSymbol(typeDeclaration) as ITypeSymbol;
-        _ = symbol.GetAttributes()
-            .OfUnionTypeAttribute()
-            .GroupBy(t => t.RepresentableTypeSymbol.ToDisplayString())
-            .Select(g => (Name: g.Key, Locations: g.Select(t => typeDeclaration.GetLocation()).ToArray()))
+        token.ThrowIfCancellationRequested();
+
+        if(context.TargetDeclaration.IsPartial())
+            return;
+
+        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var diagnostics = Diagnostics.NonPartialDeclaration(location);
+        _ = Add(diagnostics);
+    }
+    public void DiagnoseNonStatic(ModelFactoryParameters context, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+
+        if(!context.TargetDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
+            return;
+
+        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var diagnostics = Diagnostics.StaticTarget(location);
+        _ = Add(diagnostics);
+    }
+    public void DiagnoseNonRecord(ModelFactoryParameters context, CancellationToken token)
+    {
+        if(!context.TargetDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
+            !context.TargetDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
+        {
+            return;
+        }
+
+        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var diagnostics = Diagnostics.RecordTarget(location);
+        _ = Add(diagnostics);
+    }
+    public void DiagnoseUnionTypeAttribute(ModelFactoryParameters context, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+
+        if(context.Attributes.AllUnionTypeAttributes.Count > 0)
+            return;
+
+        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var diagnostics = Diagnostics.MissingUnionTypeAttribute(location);
+        _ = Add(diagnostics);
+    }
+    public void DiagnoseUniqueUnionTypeAttributes(ModelFactoryParameters context, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+
+        _ = context.Attributes.AllUnionTypeAttributes
+            .GroupBy(t => t.RepresentableTypeSymbol.ToFullString())
+            .Select(g => (Name: g.Key, Locations: g.Select(t => context.TargetDeclaration.GetLocation()).ToArray()))
             .Where(t => t.Locations.Length > 1)
-            .SelectMany(t => t.Locations.Select(l => Diagnostics.DuplicateUnionTypeAttributes.Create(t.Name, l)))
+            .SelectMany(t => t.Locations.Skip(1).Select(l => Diagnostics.DuplicateUnionTypeAttributes(t.Name, l)))
             .Aggregate(this, (b, d) => b.Add(d));
     }
 
@@ -108,31 +159,33 @@ sealed class DiagnosticsModelBuilder
     //  -> error if superset of disjunct union
     //  -> error if subset of disjunct union
 
-    internal void DiagnoseTarget(
-        TypeDeclarationSyntax typeDeclarationSyntax,
-        SemanticModel semanticModel,
-        CancellationToken token)
+    internal void DiagnoseAll(ModelFactoryParameters context, CancellationToken token)
     {
-        token.ThrowIfCancellationRequested();
-        ValidatePartiality(typeDeclarationSyntax);
+        var diagnosers = new[]
+        {
+            DiagnoseImplicitConversionIfSolitary,
+            DiagnoseUnionTypeCount,
+            DiagnosePartiality,
+            DiagnosePartiality,
+            DiagnoseNonStatic,
+            DiagnoseNonRecord,
+            DiagnoseUnionTypeAttribute,
+            DiagnoseUniqueUnionTypeAttributes
+        };
 
-        token.ThrowIfCancellationRequested();
-        ValidateNonRecord(typeDeclarationSyntax);
-
-        token.ThrowIfCancellationRequested();
-        ValidateNonStatic(typeDeclarationSyntax);
-
-        token.ThrowIfCancellationRequested();
-        ValidateUnionTypeAttribute(typeDeclarationSyntax, semanticModel);
-
-        token.ThrowIfCancellationRequested();
-        ValidateUniqueUnionTypeAttributes(typeDeclarationSyntax, semanticModel);
+        foreach(var d in diagnosers)
+            d.Invoke(context, token);
     }
 
     public DiagnosticsModelBuilder Add(Diagnostic diagnostic)
     {
-        lock (_syncRoot)
+        lock(_syncRoot)
         {
+            if(diagnostic.IsError())
+            {
+                IsError = true;
+            }
+
             _diagnostics.Add(diagnostic);
         }
 
@@ -141,7 +194,7 @@ sealed class DiagnosticsModelBuilder
     public DiagnosticsModelBuilder Clone()
     {
         ICollection<Diagnostic> diagnostics;
-        lock (_syncRoot)
+        lock(_syncRoot)
         {
             diagnostics = _diagnostics.ToList();
         }
@@ -151,7 +204,7 @@ sealed class DiagnosticsModelBuilder
 
     public Model Build()
     {
-        lock (_syncRoot)
+        lock(_syncRoot)
         {
             return new Model(_diagnostics.ToList());
         }

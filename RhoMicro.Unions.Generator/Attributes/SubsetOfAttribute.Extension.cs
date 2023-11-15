@@ -1,6 +1,6 @@
-﻿namespace RhoMicro.Unions;
+﻿#pragma warning disable CS8618
 
-using Microsoft.CodeAnalysis;
+namespace RhoMicro.Unions;
 
 using RhoMicro.AttributeFactoryGenerator;
 
@@ -9,7 +9,7 @@ using System;
 [GenerateFactory]
 public partial class SubsetOfAttribute
 {
-    [ExcludeConstructor]
+    [ExcludeFromFactory]
     private SubsetOfAttribute(Object supersetUnionTypeSymbolContainer) =>
         _supersetUnionTypeSymbolContainer = supersetUnionTypeSymbolContainer;
 }
