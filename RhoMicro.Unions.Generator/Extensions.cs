@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+
 internal static class Extensions
 {
     public static Boolean IsError(this Diagnostic diagnostic) =>
@@ -36,4 +38,63 @@ internal static class Extensions
 
             return c;
         });
+
+    public static StringBuilder AppendJoin<T>(this StringBuilder builder, String separator, IEnumerable<T> values)
+    {
+        using var iterator = values.GetEnumerator();
+
+        if(iterator == null || !iterator.MoveNext())
+        {
+            return builder;
+        }
+
+        _ = builder.Append(iterator.Current?.ToString() ?? String.Empty);
+
+        while(iterator.MoveNext())
+        {
+            _ = builder.Append(separator).Append(iterator.Current?.ToString() ?? String.Empty);
+        }
+
+        return builder;
+    }
+    public static StringBuilder AppendAggregateJoin<T>(
+        this StringBuilder builder,
+        String separator,
+        IEnumerable<T> values,
+        Func<StringBuilder, T, StringBuilder> aggregation)
+    {
+        using var iterator = values.GetEnumerator();
+
+        if(iterator == null || !iterator.MoveNext())
+        {
+            return builder;
+        }
+
+        builder = aggregation.Invoke(builder, iterator.Current);
+
+        while(iterator.MoveNext())
+        {
+            builder = aggregation.Invoke(builder.Append(separator), iterator.Current);
+        }
+
+        return builder;
+    }
+    public static StringBuilder AppendJoin<T>(this StringBuilder builder, Char separator, IEnumerable<T> values)
+    {
+        using var iterator = values.GetEnumerator();
+
+        if(iterator == null || !iterator.MoveNext())
+        {
+            return builder;
+        }
+
+        _ = builder.Append(iterator.Current?.ToString() ?? String.Empty);
+
+        while(iterator.MoveNext())
+        {
+            _ = builder.Append(separator).Append(iterator.Current?.ToString() ?? String.Empty);
+        }
+
+        return builder;
+    }
 }

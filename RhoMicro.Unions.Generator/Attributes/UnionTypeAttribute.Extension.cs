@@ -8,15 +8,15 @@ using RhoMicro.AttributeFactoryGenerator;
 using RhoMicro.Unions.Generator;
 
 using System;
+using System.Collections.Generic;
 
 [GenerateFactory]
-public partial class UnionTypeAttribute
+public partial class UnionTypeAttribute : IEquatable<UnionTypeAttribute?>
 {
     [ExcludeFromFactory]
     public UnionTypeAttribute(Object representableTypeSymbolContainer) =>
         _representableTypeSymbolContainer = representableTypeSymbolContainer;
 
-    private String _parameterName;
     private String _safeAlias;
 
     public String GetInstanceVariableExpression(ITypeSymbol target, String instance = "this") =>
@@ -26,29 +26,32 @@ public partial class UnionTypeAttribute
     public String TagValueExpression => $"Tag.{SafeAlias}";
 
     public String SafeAlias => _safeAlias ??= Alias ?? RepresentableTypeSymbol.Name;
-    public String ParameterName
-    {
-        get
-        {
-            if(_parameterName != null)
-            {
-                return _parameterName;
-            }
-
-            var alias = SafeAlias;
-            var parameterName = alias;
-            if(Char.IsUpper(alias, 0))
-            {
-                parameterName = Char.ToLowerInvariant(alias[0]) + alias.Remove(0);
-            }
-
-            _parameterName = parameterName;
-
-            return parameterName;
-        }
-    }
 
     public Boolean IsConflictingDefinition(UnionTypeAttribute other) =>
         SymbolEqualityComparer.Default.Equals(RepresentableTypeSymbol, other.RepresentableTypeSymbol) &&
         (Alias != other.Alias || Options != other.Options);
+    public override Boolean Equals(Object? obj) => Equals(obj as UnionTypeAttribute);
+    public Boolean Equals(UnionTypeAttribute? other) => other is not null
+        && base.Equals(other)
+        && Alias == other.Alias
+        && Options == other.Options
+        && SymbolEqualityComparer.Default.Equals(RepresentableTypeSymbol, other.RepresentableTypeSymbol);
+
+    public override Int32 GetHashCode()
+    {
+        var hashCode = 1581354465;
+        hashCode = hashCode * -1521134295 + base.GetHashCode();
+        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(Alias);
+        hashCode = hashCode * -1521134295 + Options.GetHashCode();
+        hashCode = hashCode * -1521134295 + SymbolEqualityComparer.Default.GetHashCode(RepresentableTypeSymbol);
+        return hashCode;
+    }
+
+    public static Boolean operator ==(UnionTypeAttribute? left, UnionTypeAttribute? right) =>
+        left == null ?
+        right == null :
+        left == null ?
+        right == null :
+        left.Equals(right);
+    public static Boolean operator !=(UnionTypeAttribute? left, UnionTypeAttribute? right) => !(left == right);
 }

@@ -25,9 +25,7 @@ readonly struct NestedTypesModel
         if(attributes.AllUnionTypeAttributes.Count > 1)
         {
             _ = sourceTextBuilder.Append("private enum Tag : Byte {")
-                .Append(String.Join(",", attributes.AllUnionTypeAttributes
-                    .OrderBy(a => a.RepresentableTypeSymbol.IsReferenceType)
-                    .Select(a => a.SafeAlias)))
+                .AppendJoin(',', attributes.AllUnionTypeAttributes.Select(a => a.SafeAlias))
                 .Append('}');
         }
 

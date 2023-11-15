@@ -2,6 +2,7 @@
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Options;
 
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,6 @@ readonly struct SourceCarry<T> : IEquatable<SourceCarry<T>>
 
         return new SourceCarry<ModelFactoryParameters>(context, diagnostics, source);
     }
-
     public SourceCarry<TResult> Project<TResult>(Func<T, DiagnosticsModelBuilder, SourceModelBuilder, TResult> project)
     {
         var diagnostics = Diagnostics.Clone();
@@ -69,7 +69,6 @@ readonly struct SourceCarry<T> : IEquatable<SourceCarry<T>>
 
         return result;
     }
-
     public void AddToContext(SourceProductionContext context)
     {
         var diagnostics = Diagnostics.Build();
@@ -82,9 +81,8 @@ readonly struct SourceCarry<T> : IEquatable<SourceCarry<T>>
     }
 
     public override Boolean Equals(Object obj) => obj is SourceCarry<T> composite && Equals(composite);
-    public Boolean Equals(SourceCarry<T> other) =>
-        EqualityComparer<SourceModelBuilder>.Default.Equals(Source, other.Source);
-    public override Int32 GetHashCode() => EqualityComparer<SourceModelBuilder>.Default.GetHashCode(Source);
+    public Boolean Equals(SourceCarry<T> other) => EqualityComparer<Optional<T>>.Default.Equals(_context, other._context);
+    public override Int32 GetHashCode() => EqualityComparer<Optional<T>>.Default.GetHashCode(_context);
 
     public static Boolean operator ==(SourceCarry<T> left, SourceCarry<T> right) => left.Equals(right);
     public static Boolean operator !=(SourceCarry<T> left, SourceCarry<T> right) => !(left == right);

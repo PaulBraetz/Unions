@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-sealed partial class SourceModelBuilder : IEquatable<SourceModelBuilder>
+sealed partial class SourceModelBuilder
 {
     private Boolean _isInitialized;
 
@@ -103,10 +103,30 @@ sealed partial class SourceModelBuilder : IEquatable<SourceModelBuilder>
 
         _downCastFunction = model.SourceText;
     }
-#pragma warning disable IDE0044 // Add readonly modifier
+
     private String? _switchMethod;
+    public void SetSwitchMethod(SwitchMethodModel model)
+    {
+        _isInitialized = true;
+
+        _switchMethod = model.SourceText;
+    }
+
     private String? _matchFunction;
-#pragma warning restore IDE0044 // Add readonly modifier
+    public void SetMatchFunction(MatchFunctionModel model)
+    {
+        _isInitialized = true;
+
+        _matchFunction = model.SourceText;
+    }
+
+    private String? _getDebugStringFunction;
+    public void SetGetDebugStringFunction(GetDebugStringFunctionModel model)
+    {
+        _isInitialized = true;
+
+        _getDebugStringFunction = model.SourceText;
+    }
 
     public Model Build()
     {
@@ -119,7 +139,8 @@ sealed partial class SourceModelBuilder : IEquatable<SourceModelBuilder>
             .AppendLine("#pragma warning disable")
             .AppendLine("using System.Runtime.InteropServices;")
             .AppendLine("using System;")
-            .Append(_targetNamespace)
+            .AppendLine(_targetNamespace)
+            .AppendLine("[System.Diagnostics.DebuggerDisplay(\"{GetDebugString()}\")]")
             .Append(_targetAccessibility).Append(" partial ").Append(_targetStructOrClass).Append(' ').AppendLine(_targetName).AppendLine(_interfaceImplementation)
             .Append('{')
             .AppendLine("#region Nested Types")
@@ -133,48 +154,9 @@ sealed partial class SourceModelBuilder : IEquatable<SourceModelBuilder>
             .AppendLine("#endregion")
             .AppendLine("#region Methods")
             .AppendLine(_downCastFunction)
-            /*
-            
-    public readonly void Switch(
-        Action<Int32> onInt32,
-        Action<String?> onString,
-        Action<Byte> onByte,
-        Action<List<Double>> onList)
-    {
-        switch(_tag)
-        {
-            case Tag.String?:
-                onString.Invoke((String?)_referenceTypeContainer);
-                return;
-            case Tag.List_Double:
-                onList.Invoke((List<Double>)_referenceTypeContainer);
-                return;
-            case Tag.Int32:
-                onInt32.Invoke(_valueTypeContainer.Int32Value);
-                return;
-            case Tag.Byte:
-                onByte.Invoke(_valueTypeContainer.ByteValue);
-                return;
-            default:
-                throw new InvalidOperationException();
-        }
-    }
-    public readonly TResult Match<TResult>(
-        Func<Int32, TResult> onInt32,
-        Func<String?, TResult> onString,
-        Func<Byte, TResult> onByte,
-        Func<List<Double>, TResult> onList) =>
-        _tag switch
-        {
-            Tag.String? => onString.Invoke((String?)_referenceTypeContainer),
-            Tag.List_Double => onList.Invoke((List<Double>)_referenceTypeContainer),
-            Tag.Int32 => onInt32.Invoke(_valueTypeContainer.Int32Value),
-            Tag.Byte => onByte.Invoke(_valueTypeContainer.ByteValue),
-            _ => throw new InvalidOperationException()
-        };
-            */
-            //switch
-            //match
+            .AppendLine(_switchMethod)
+            .AppendLine(_matchFunction)
+            .AppendLine(_getDebugStringFunction)
             .AppendLine("#endregion")
             .AppendLine("#region Overrides & Equality")
             .Append(_toStringFunction)
@@ -217,51 +199,7 @@ sealed partial class SourceModelBuilder : IEquatable<SourceModelBuilder>
         _fields = _fields,
         _constructors = _constructors,
         _nestedTypes = _nestedTypes,
-        _interfaceImplementation = _interfaceImplementation
+        _interfaceImplementation = _interfaceImplementation,
+        _getDebugStringFunction = _getDebugStringFunction
     };
-    public override Boolean Equals(Object obj) =>
-        obj is SourceModelBuilder other && Equals(other);
-    public Boolean Equals(SourceModelBuilder other) =>
-        other is not null
-        && _isInitialized == other._isInitialized
-        && _targetName == other._targetName
-        && _targetStructOrClass == other._targetStructOrClass
-        && _targetNamespace == other._targetNamespace
-        && _targetAccessibility == other._targetAccessibility
-        && _conversionOperators == other._conversionOperators
-        && _constructors == other._constructors
-        && _nestedTypes == other._nestedTypes
-        && _fields == other._fields
-        && _toStringFunction == other._toStringFunction
-        && _interfaceImplementation == other._interfaceImplementation
-        && _getHashcodeFunction == other._getHashcodeFunction
-        && _equalsFunctions == other._equalsFunctions
-        && _switchMethod == other._switchMethod
-        && _matchFunction == other._matchFunction
-        && _downCastFunction == other._downCastFunction;
-
-    public override Int32 GetHashCode()
-    {
-        var hashCode = -1573534906;
-        hashCode = hashCode * -1521134295 + _isInitialized.GetHashCode();
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_targetName);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_targetStructOrClass);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_targetNamespace);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_targetAccessibility);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_conversionOperators);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_constructors);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_nestedTypes);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_fields);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_toStringFunction);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_interfaceImplementation);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_getHashcodeFunction);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_equalsFunctions);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_switchMethod);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_matchFunction);
-        hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(_downCastFunction);
-        return hashCode;
-    }
-
-    public static Boolean operator ==(SourceModelBuilder left, SourceModelBuilder right) => EqualityComparer<SourceModelBuilder>.Default.Equals(left, right);
-    public static Boolean operator !=(SourceModelBuilder left, SourceModelBuilder right) => !(left == right);
 }

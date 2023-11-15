@@ -30,30 +30,17 @@ public sealed class Generator : IIncrementalGenerator
                 c => c.Parameters.Attributes.AllUnionTypeAttributes
                     .Select(a => ConversionOperatorModel.Create(c.Parameters.TargetSymbol, a, c.Parameters.Attributes.AllUnionTypeAttributes)),
                 c => c.Source.SetOperators(c.Model))
-            .SelectCarry(
-                ConstructorsModel.Create,
-                ConstructorsModel.Integrate)
-            .SelectCarry(
-                NestedTypesModel.Create,
-                NestedTypesModel.Integrate)
-            .SelectCarry(
-                FieldsModel.Create,
-                FieldsModel.Integrate)
-            .SelectCarry(
-                ToStringFunctionModel.Create,
-                ToStringFunctionModel.Integrate)
-            .SelectCarry(
-                InterfaceImplementationModel.Create,
-                InterfaceImplementationModel.Integrate)
-            .SelectCarry(
-                GetHashcodeFunctionModel.Create,
-                GetHashcodeFunctionModel.Integrate)
-            .SelectCarry(
-                EqualsFunctionsModel.Create,
-                EqualsFunctionsModel.Integrate)
-            .SelectCarry(
-                DownCastFunctionModel.Create,
-                DownCastFunctionModel.Integrate);
+            .SelectCarry(ConstructorsModel.Create, ConstructorsModel.Integrate)
+            .SelectCarry(NestedTypesModel.Create, NestedTypesModel.Integrate)
+            .SelectCarry(FieldsModel.Create, FieldsModel.Integrate)
+            .SelectCarry(ToStringFunctionModel.Create, ToStringFunctionModel.Integrate)
+            .SelectCarry(InterfaceImplementationModel.Create, InterfaceImplementationModel.Integrate)
+            .SelectCarry(GetHashcodeFunctionModel.Create, GetHashcodeFunctionModel.Integrate)
+            .SelectCarry(EqualsFunctionsModel.Create, EqualsFunctionsModel.Integrate)
+            .SelectCarry(DownCastFunctionModel.Create, DownCastFunctionModel.Integrate)
+            .SelectCarry(SwitchMethodModel.Create, SwitchMethodModel.Integrate)
+            .SelectCarry(MatchFunctionModel.Create, MatchFunctionModel.Integrate)
+            .SelectCarry(GetDebugStringFunctionModel.Create, GetDebugStringFunctionModel.Integrate);
 
         context.RegisterSourceOutput(models, (c, sc) => sc.AddToContext(c));
     }
