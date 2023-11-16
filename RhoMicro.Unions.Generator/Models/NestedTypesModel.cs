@@ -13,10 +13,15 @@ readonly struct NestedTypesModel
 {
     public readonly String SourceText;
     private NestedTypesModel(String sourceText) => SourceText = sourceText;
-    public static void Integrate(ModelIntegrationContext<NestedTypesModel> context) =>
-        context.Source.SetNestedTypes(context.Model);
 
-    public static NestedTypesModel Create(ModelFactoryInvocationContext context)
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<NestedTypesModel> context) =>
+            context.Source.SetNestedTypes(context.Model);
+
+    static NestedTypesModel Create(ModelCreationContext context)
     {
         var sourceTextBuilder = new StringBuilder();
 

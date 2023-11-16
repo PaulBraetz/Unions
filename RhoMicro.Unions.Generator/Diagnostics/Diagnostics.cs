@@ -22,9 +22,23 @@ internal static partial class Diagnostics
         ImplicitConversionOptionOnSolitary = 9,
         InvalidAttributeTarget = 10,
         AliasCollision = 11,
-        UnionTypeSettingsOnNonUnionType = 12
+        UnionTypeSettingsOnNonUnionType = 12,
+        RepresentableTypeIsSupertype = 13,
+        RepresentableTypeIsInterface = 14
     }
 
+    public static Diagnostic RepresentableTypeIsInterface(Location location, String representableTypeName) =>
+        Create(
+            Id.RepresentableTypeIsInterface,
+            location,
+            DiagnosticSeverity.Info,
+            representableTypeName);
+    public static Diagnostic RepresentableTypeIsSupertype(Location location, String representableTypeName) =>
+        Create(
+            Id.RepresentableTypeIsSupertype,
+            location,
+            DiagnosticSeverity.Info,
+            representableTypeName);
     public static Diagnostic UnionTypeSettingsOnNonUnionType(Location location) =>
         Create(
             Id.UnionTypeSettingsOnNonUnionType,

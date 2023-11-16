@@ -1,4 +1,6 @@
 ﻿namespace RhoMicro.Unions.Generator.Models;
+using Microsoft.CodeAnalysis;
+
 using RhoMicro.Unions.Generator;
 
 using System;
@@ -13,9 +15,13 @@ readonly struct SwitchMethodModel
     public readonly String SourceText;
     private SwitchMethodModel(String sourceText) => SourceText = sourceText;
 
-    public static void Integrate(ModelIntegrationContext<SwitchMethodModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<SwitchMethodModel> context) =>
         context.Source.SetSwitchMethod(context.Model);
-    public static SwitchMethodModel Create(ModelFactoryInvocationContext context)
+    static SwitchMethodModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
         var target = context.Parameters.TargetSymbol;

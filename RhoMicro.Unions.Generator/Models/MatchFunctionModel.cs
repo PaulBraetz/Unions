@@ -1,5 +1,7 @@
 ﻿namespace RhoMicro.Unions.Generator.Models;
 
+using Microsoft.CodeAnalysis;
+
 using System;
 using System.Linq;
 using System.Text;
@@ -9,9 +11,13 @@ readonly struct MatchFunctionModel
     public readonly String SourceText;
     private MatchFunctionModel(String sourceText) => SourceText = sourceText;
 
-    public static void Integrate(ModelIntegrationContext<MatchFunctionModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<MatchFunctionModel> context) =>
         context.Source.SetMatchFunction(context.Model);
-    public static MatchFunctionModel Create(ModelFactoryInvocationContext context)
+    static MatchFunctionModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
         var target = context.Parameters.TargetSymbol;

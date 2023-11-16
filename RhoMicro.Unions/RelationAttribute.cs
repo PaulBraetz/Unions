@@ -17,7 +17,7 @@ internal enum RelationType
     /// This option is not available if the provided type has already defined a relation to the target type.
     /// </para>
     /// </summary>
-    Auto = 0b1,
+    Auto = 0x0,
     /// <summary>
     /// The target type is a superset of the provided type.
     /// This means that two conversion operations will be generated:
@@ -31,7 +31,7 @@ internal enum RelationType
     /// </list>
     /// This option is not available if the provided type has already defined a relation to the target type.
     /// </summary>
-    Superset = 0b01,
+    Superset = 0x1,
     /// <summary>
     /// The target type is a subset of the provided type.
     /// This means that two conversion operations will be generated:
@@ -45,7 +45,7 @@ internal enum RelationType
     /// </list>
     /// This option is not available if the provided type has already defined a relation to the target type.
     /// </summary>
-    Subset = 0b001,
+    Subset = 0x2,
     /// <summary>
     /// The target type intersects the provided type.
     /// This means that two conversion operations will be generated:
@@ -59,7 +59,7 @@ internal enum RelationType
     /// </list>
     /// This option is not available if the provided type has already defined a relation to the target type.
     /// </summary>
-    Intersection = 0b0001,
+    Intersection = 0x4,
     /// <summary>
     /// The target type is congruent to the provided type.
     /// This means that two conversion operations will be generated:
@@ -73,14 +73,14 @@ internal enum RelationType
     /// </list>
     /// This option is not available if the provided type has already defined a relation to the target type.
     /// </summary>
-    Congruent = 0b0_0001
+    Congruent = 0x8
 }
 
 /// <summary>
 /// Marks the target type to be related to another union type.
 /// </summary>
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-internal  sealed partial class RelationAttribute : Attribute
+internal sealed partial class RelationAttribute : Attribute
 {
     /// <summary>
     /// Initializes a new instance.

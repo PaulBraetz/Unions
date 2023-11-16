@@ -1,4 +1,6 @@
 ﻿namespace RhoMicro.Unions.Generator.Models;
+using Microsoft.CodeAnalysis;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +12,13 @@ readonly struct DownCastFunctionModel
     public readonly String SourceText;
     private DownCastFunctionModel(String sourceText) => SourceText = sourceText;
 
-    public static void Integrate(ModelIntegrationContext<DownCastFunctionModel> context) =>
-        context.Source.SetDownCastFunction(context.Model);
-    public static DownCastFunctionModel Create(ModelFactoryInvocationContext context)
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    private static void Integrate(ModelIntegrationContext<DownCastFunctionModel> context) =>
+            context.Source.SetDownCastFunction(context.Model);
+    private static DownCastFunctionModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
         var target = context.Parameters.TargetSymbol;

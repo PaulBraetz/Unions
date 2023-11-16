@@ -14,10 +14,15 @@ readonly struct ConstructorsModel
 {
     public readonly String SourceText;
     private ConstructorsModel(String sourceText) => SourceText = sourceText;
-    public static void Integrate(ModelIntegrationContext<ConstructorsModel> context) =>
+
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    private static void Integrate(ModelIntegrationContext<ConstructorsModel> context) =>
         context.Source.SetConstructors(context.Model);
 
-    public static ConstructorsModel Create(ModelFactoryInvocationContext context)
+    private static ConstructorsModel Create(ModelCreationContext context)
     {
         var (symbol, _, _, attributes) = context.Parameters;
 

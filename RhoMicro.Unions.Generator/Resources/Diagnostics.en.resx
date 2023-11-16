@@ -171,6 +171,18 @@
   <data name="RecordTarget_Title" xml:space="preserve">
     <value>Record Union Type Declaration</value>
   </data>
+  <data name="RepresentableTypeIsInterface_Message" xml:space="preserve">
+    <value>No conversion operators will be generated for the representable type {0} because it is an interface.</value>
+  </data>
+  <data name="RepresentableTypeIsInterface_Title" xml:space="preserve">
+    <value>Conversion Operators Omitted</value>
+  </data>
+  <data name="RepresentableTypeIsSupertype_Message" xml:space="preserve">
+    <value>No conversion operators will be generated for the representable type {0} because it is a supertype of the target union type.</value>
+  </data>
+  <data name="RepresentableTypeIsSupertype_Title" xml:space="preserve">
+    <value>Conversion Operators Omitted</value>
+  </data>
   <data name="StaticTarget_Message" xml:space="preserve">
     <value>Union types may not be declared using the 'static' modifier.</value>
   </data>

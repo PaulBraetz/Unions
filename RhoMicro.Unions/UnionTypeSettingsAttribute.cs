@@ -33,13 +33,33 @@ public enum ToStringSetting
 }
 
 /// <summary>
-/// Supplies the generator with additional settings on how to generate a targeted union type.
+/// Defines settings for annotating the target with an instance of <see cref="System.Runtime.InteropServices.StructLayoutAttribute"/>.
 /// </summary>
-[AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public enum LayoutSetting
+{
+    /// <summary>
+    /// Do not generate any annotations.
+    /// </summary>
+    Auto,
+    /// <summary>
+    /// Generate an annotation optimized for size.
+    /// </summary>
+    Small
+}
+
+/// <summary>
+/// Supplies the generator with additional settings on how to generate a targeted union type.
+/// If the target member is an assembly, the attribute supplies default values for any union type not defining its own settings.
+/// </summary>
+[AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
 public sealed partial class UnionTypeSettingsAttribute : Attribute
 {
     /// <summary>
-    /// Gets or sets settings defining how to generate an implementation <see cref="Object.ToString"/>.
+    /// Gets or sets a setting defining how to generate an implementation <see cref="Object.ToString"/>.
     /// </summary>
     public ToStringSetting ToStringSetting { get; set; } = ToStringSetting.Detailed;
+    /// <summary>
+    /// Gets or sets a setting defining whether to generate a size optimizing annotation.
+    /// </summary>
+    public LayoutSetting Layout { get; set; } = LayoutSetting.Small;
 }

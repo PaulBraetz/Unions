@@ -1,9 +1,6 @@
-﻿//TODO: continue here
-
-namespace RhoMicro.Unions.Generator.Models;
+﻿namespace RhoMicro.Unions.Generator.Models;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Operations;
 
 using RhoMicro.Unions;
 using RhoMicro.Unions.Generator;
@@ -12,17 +9,45 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
+
+readonly struct ConversionOperatorsModel
+{
+    private readonly IEnumerable<ConversionOperatorModel> _models;
+
+    private ConversionOperatorsModel(IEnumerable<ConversionOperatorModel> models) => _models = models;
+
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    private static void Integrate(ModelIntegrationContext<ConversionOperatorsModel> context) =>
+        context.Source.SetOperators(context.Model._models);
+
+    private static ConversionOperatorsModel Create(ModelCreationContext context)
+    {
+        var parameters = context.Parameters;
+        var omissions = context.Parameters.OperatorOmissions.AllOmissions;
+        var models = parameters.Attributes.AllUnionTypeAttributes
+            .Where(a => !omissions.Contains(a))
+            .Select(attribute => ConversionOperatorModel.Create(attribute, parameters));
+
+        var result = new ConversionOperatorsModel(models);
+
+        return result;
+    }
+}
+
+readonly struct ConversionOperatorModel
 {
     public readonly String SourceText;
 
     private ConversionOperatorModel(String sourceText) => SourceText = sourceText;
 
-    public static ConversionOperatorModel Create(
-        ITypeSymbol target,
-        UnionTypeAttribute attribute,
-        IReadOnlyCollection<UnionTypeAttribute> allAttributes)
+    public static ConversionOperatorModel Create(UnionTypeAttribute attribute, ModelFactoryParameters parameters)
     {
+        var target = parameters.TargetSymbol;
+        var allAttributes = parameters.Attributes.AllUnionTypeAttributes;
+
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// <summary>")
             .Append("/// Converts an instance of <see cref=\"").AppendSymbol(attribute.RepresentableTypeSymbol).Append("\"/> to the union type <see cref=\"").AppendSymbol(target).AppendLine("\"/>.")
@@ -79,56 +104,4 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
 
         return result;
     }
-
-    //public static ConversionOperatorModel Create(
-    //    ITypeSymbol symbol,
-    //    IEnumerable<UnionTypeAttribute> unionTypeAttributes,
-    //    RelationAttribute attribute)
-    //{
-    //    var sourceTextBuilder = new StringBuilder("public static implicit operator ")
-    //        .AppendSymbol(symbol)
-    //        .Append('(')
-    //        .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-    //        .Append(" subsetUnion) => subsetUnion.DownCast<")
-    //        .AppendSymbol(symbol)
-    //        .AppendLine(">();")
-    //        .Append("public static explicit operator ")
-    //        .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-    //        .Append('(')
-    //        .AppendSymbol(symbol)
-    //        .AppendLine(" union) => union.__tag switch")
-    //        .AppendLine("{");
-
-    //    foreach(var unionTypeAttribute in unionTypeAttributes)
-    //    {
-    //        _ = sourceTextBuilder.Append("Tag.")
-    //            .Append(unionTypeAttribute.SafeAlias)
-    //            .Append(" => ")
-    //            .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-    //            .Append("union.__");
-
-    //        _ = unionTypeAttribute.RepresentableTypeSymbol.IsValueType ?
-    //            sourceTextBuilder.Append("valueTypeContainer.")
-    //                .Append(unionTypeAttribute.SafeAlias) :
-    //            sourceTextBuilder.Append("referenceTypeContainer");
-
-    //        _ = sourceTextBuilder.AppendLine(",");
-    //    }
-
-    //    _ = sourceTextBuilder.Append("_ => ")
-    //        .Append(ConstantSources.InvalidTagStateThrow)
-    //        .AppendLine("};");
-
-    //    var sourceText = sourceTextBuilder.ToString();
-    //    var result = new ConversionOperatorModel(sourceText);
-
-    //    return result;
-    //}
-
-    public override Boolean Equals(Object obj) => obj is ConversionOperatorModel model && Equals(model);
-    public Boolean Equals(ConversionOperatorModel other) => SourceText == other.SourceText;
-    public override Int32 GetHashCode() => -1893336041 + EqualityComparer<String>.Default.GetHashCode(SourceText);
-
-    public static Boolean operator ==(ConversionOperatorModel left, ConversionOperatorModel right) => left.Equals(right);
-    public static Boolean operator !=(ConversionOperatorModel left, ConversionOperatorModel right) => !(left == right);
 }

@@ -14,10 +14,14 @@ readonly struct EqualsFunctionsModel
     private EqualsFunctionsModel(String sourceText) => SourceText = sourceText;
     public readonly String SourceText;
 
-    public static void Integrate(ModelIntegrationContext<EqualsFunctionsModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    private static void Integrate(ModelIntegrationContext<EqualsFunctionsModel> context) =>
         context.Source.SetEqualsFunctions(context.Model);
 
-    public static EqualsFunctionsModel Create(ModelFactoryInvocationContext context)
+    private static EqualsFunctionsModel Create(ModelCreationContext context)
     {
         var target = context.Parameters.TargetSymbol;
         var attributes = context.Parameters.Attributes;

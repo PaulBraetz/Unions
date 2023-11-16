@@ -1,4 +1,6 @@
 ﻿namespace RhoMicro.Unions.Generator.Models;
+using Microsoft.CodeAnalysis;
+
 using RhoMicro.Unions.Generator;
 
 using System;
@@ -12,10 +14,14 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
     public readonly String SourceText;
 
-    public static void Integrate(ModelIntegrationContext<ToStringFunctionModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<ToStringFunctionModel> context) =>
         context.Source.SetToStringFunction(context.Model);
 
-    private static ToStringFunctionModel CreateDetailed(ModelFactoryInvocationContext context)
+    static ToStringFunctionModel CreateDetailed(ModelCreationContext context)
     {
         var target = context.Parameters.TargetSymbol;
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
@@ -43,7 +49,7 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
         return result;
     }
-    private static ToStringFunctionModel CreateSimple(ModelFactoryInvocationContext context)
+    private static ToStringFunctionModel CreateSimple(ModelCreationContext context)
     {
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("#nullable enable")
@@ -60,7 +66,7 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
         return result;
     }
 
-    private static void AppendSimpleToStringExpression(ModelFactoryInvocationContext context, StringBuilder sourceTextBuilder)
+    private static void AppendSimpleToStringExpression(ModelCreationContext context, StringBuilder sourceTextBuilder)
     {
         var attributes = context.Parameters.Attributes;
 
@@ -94,7 +100,7 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
         }
     }
 
-    private static ToStringFunctionModel CreateOmitted(ModelFactoryInvocationContext _)
+    private static ToStringFunctionModel CreateOmitted(ModelCreationContext _)
     {
         var sourceText = String.Empty;
         var result = new ToStringFunctionModel(sourceText);
@@ -102,7 +108,7 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
         return result;
     }
 
-    public static ToStringFunctionModel Create(ModelFactoryInvocationContext context)
+    public static ToStringFunctionModel Create(ModelCreationContext context)
     {
         var result = context.Parameters.Attributes.Settings.ToStringSetting switch
         {

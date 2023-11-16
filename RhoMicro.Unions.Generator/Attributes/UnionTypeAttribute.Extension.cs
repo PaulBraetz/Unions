@@ -31,31 +31,30 @@ public partial class UnionTypeAttribute : IEquatable<UnionTypeAttribute?>
 
     public String SafeAlias => _safeAlias ??= Alias ?? RepresentableTypeSymbol.Name;
 
+    public Boolean RepresentableTypeIsSupertypeOfTarget(
+        ITypeSymbol target) =>
+        target.InheritsFrom(RepresentableTypeSymbol);
+
     public Boolean IsConflictingDefinition(UnionTypeAttribute other) =>
         SymbolEqualityComparer.Default.Equals(RepresentableTypeSymbol, other.RepresentableTypeSymbol) &&
         (Alias != other.Alias || Options != other.Options);
     public override Boolean Equals(Object? obj) => Equals(obj as UnionTypeAttribute);
-    public Boolean Equals(UnionTypeAttribute? other) => other is not null
-        && base.Equals(other)
-        && Alias == other.Alias
-        && Options == other.Options
-        && SymbolEqualityComparer.Default.Equals(RepresentableTypeSymbol, other.RepresentableTypeSymbol);
+    public Boolean Equals(UnionTypeAttribute? other)
+    {
+        var result = other is not null &&
+            Alias == other.Alias &&
+            Options == other.Options &&
+            SymbolEqualityComparer.Default.Equals(RepresentableTypeSymbol, other.RepresentableTypeSymbol);
+
+        return result;
+    }
 
     public override Int32 GetHashCode()
     {
         var hashCode = 1581354465;
-        hashCode = hashCode * -1521134295 + base.GetHashCode();
         hashCode = hashCode * -1521134295 + EqualityComparer<String?>.Default.GetHashCode(Alias);
         hashCode = hashCode * -1521134295 + Options.GetHashCode();
         hashCode = hashCode * -1521134295 + SymbolEqualityComparer.Default.GetHashCode(RepresentableTypeSymbol);
         return hashCode;
     }
-
-    public static Boolean operator ==(UnionTypeAttribute? left, UnionTypeAttribute? right) =>
-        left == null ?
-        right == null :
-        left == null ?
-        right == null :
-        left.Equals(right);
-    public static Boolean operator !=(UnionTypeAttribute? left, UnionTypeAttribute? right) => !(left == right);
 }

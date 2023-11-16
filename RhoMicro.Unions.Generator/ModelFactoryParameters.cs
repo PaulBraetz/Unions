@@ -9,18 +9,25 @@ using System.Net.Http;
 
 sealed class ModelFactoryParameters : IEquatable<ModelFactoryParameters>
 {
-    private ModelFactoryParameters(ITypeSymbol targetSymbol, TypeDeclarationSyntax targetDeclaration, SemanticModel semanticModel, AttributesModel attributes)
+    private ModelFactoryParameters(
+        ITypeSymbol targetSymbol,
+        TypeDeclarationSyntax targetDeclaration,
+        SemanticModel semanticModel,
+        AttributesModel attributes,
+        OperatorOmissionModel operatorOmissions)
     {
         TargetSymbol = targetSymbol;
         TargetDeclaration = targetDeclaration;
         SemanticModel = semanticModel;
         Attributes = attributes;
+        OperatorOmissions = operatorOmissions;
     }
 
     public readonly ITypeSymbol TargetSymbol;
     public readonly TypeDeclarationSyntax TargetDeclaration;
     public readonly SemanticModel SemanticModel;
     public readonly AttributesModel Attributes;
+    public readonly OperatorOmissionModel OperatorOmissions;
 
     public void Deconstruct(
         out ITypeSymbol targetSymbol,
@@ -38,14 +45,20 @@ sealed class ModelFactoryParameters : IEquatable<ModelFactoryParameters>
                 nameof(targetDeclaration));
 
         var attributes = AttributesModel.Create(targetSymbol);
-        var result = new ModelFactoryParameters(targetSymbol, targetDeclaration, semanticModel, attributes);
+        var omissions = OperatorOmissionModel.Create(targetSymbol, attributes);
+        var result = new ModelFactoryParameters(
+            targetSymbol,
+            targetDeclaration,
+            semanticModel,
+            attributes,
+            omissions);
 
         return result;
     }
 
     public override Boolean Equals(Object? obj) =>
         obj is ModelFactoryParameters other && Equals(other);
-    public Boolean Equals(ModelFactoryParameters? other) => 
+    public Boolean Equals(ModelFactoryParameters? other) =>
         other is not null && Attributes.Equals(other.Attributes);
     public override Int32 GetHashCode() => Attributes.GetHashCode();
 

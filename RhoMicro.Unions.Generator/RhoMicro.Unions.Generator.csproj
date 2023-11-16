@@ -35,7 +35,7 @@
 
 	<PropertyGroup>
 		<!--'.0' required for auto source gen updater-->
-		<AssemblyName>$(MSBuildProjectName).201</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName).227</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 

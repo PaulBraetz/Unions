@@ -65,6 +65,23 @@ sealed class DiagnosticsModelBuilder
     }
 
     #region Auto Diagnosers
+    public void DiagnoseOperatorOmissions(ModelFactoryParameters parameters)
+    {
+        var omissions = parameters.OperatorOmissions;
+        var location = parameters.TargetDeclaration.GetLocation();
+
+        foreach(var interfaceOmission in omissions.Interfaces)
+        {
+            var diagnostic = Diagnostics.RepresentableTypeIsInterface(location, interfaceOmission.RepresentableTypeSymbol.Name);
+            _ = Add(diagnostic);
+        }
+
+        foreach(var supertypes in omissions.Supertypes)
+        {
+            var diagnostic = Diagnostics.RepresentableTypeIsSupertype(location, supertypes.RepresentableTypeSymbol.Name);
+            _ = Add(diagnostic);
+        }
+    }
     public void DiagnoseUnionTypeSettingsOnNonUnionType(ModelFactoryParameters parameters)
     {
         var unionTypeAttributes = parameters.Attributes.AllUnionTypeAttributes;

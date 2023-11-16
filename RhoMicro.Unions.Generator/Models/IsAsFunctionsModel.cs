@@ -13,10 +13,15 @@ readonly struct IsAsFunctionsModel
 {
     public readonly String SourceText;
     private IsAsFunctionsModel(String sourceText) => SourceText = sourceText;
-    public static void Integrate(ModelIntegrationContext<IsAsFunctionsModel> context) =>
+
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<IsAsFunctionsModel> context) =>
         context.Source.SetIsAsFunctions(context.Model);
 
-    public static IsAsFunctionsModel Create(ModelFactoryInvocationContext context)
+    static IsAsFunctionsModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
         var target = context.Parameters.TargetSymbol;

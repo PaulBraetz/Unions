@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -61,6 +62,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
         }
 
         var settings = attributes.OfUnionTypeSettingsAttribute().SingleOrDefault() ??
+            target.ContainingAssembly.GetAttributes().OfUnionTypeSettingsAttribute().SingleOrDefault() ??
             new UnionTypeSettingsAttribute();
 
         var result = new AttributesModel(

@@ -1,6 +1,7 @@
 ﻿namespace RhoMicro.Unions.Generator;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using System;
@@ -42,19 +43,20 @@ internal static class Extensions
     (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue)));
     public static StringBuilder AppendSymbol(this StringBuilder builder, ITypeSymbol symbol) =>
         builder.Append(symbol.ToFullString());
+
     public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
         this IncrementalValuesProvider<SourceCarry<TSource>> provider,
         Func<TSource, DiagnosticsModelBuilder, SourceModelBuilder, CancellationToken, TResult> project) =>
         provider.Select((c, t) => c.Project((s, d, b) => project.Invoke(s, d, b, t)));
     public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> SelectCarry<TModel>(
         this IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider,
-        Func<ModelFactoryInvocationContext, TModel> modelFactory,
+        Func<ModelCreationContext, TModel> modelFactory,
         Action<ModelIntegrationContext<TModel>> modelIntegration) =>
         provider.SelectCarry((c, d, s, t) =>
         {
             t.ThrowIfCancellationRequested();
 
-            var invocationContext = new ModelFactoryInvocationContext(c, t);
+            var invocationContext = new ModelCreationContext(c, t);
             var model = modelFactory.Invoke(invocationContext);
 
             var integrationContext = new ModelIntegrationContext<TModel>(d, s, t, model);
@@ -62,6 +64,52 @@ internal static class Extensions
 
             return c;
         });
+
+    public static String GetContainingClassHead(this ITypeSymbol nestedType)
+    {
+        var resultBuilder = new StringBuilder();
+        var headers = getContainingTypes(nestedType)
+            .Select(s => s.TypeKind switch
+            {
+                TypeKind.Class => "class ",
+                TypeKind.Struct => "struct ",
+                TypeKind.Interface => "interface ",
+                _ => null
+            } + s.Name)
+            .Where(k => k != null)
+            .Aggregate(
+                resultBuilder,
+                (b, s) => b.Append("partial ").Append(s).AppendLine("{"));
+
+        var result = resultBuilder.ToString();
+
+        return result;
+
+        static IEnumerable<ITypeSymbol> getContainingTypes(ITypeSymbol symbol)
+        {
+            if(symbol.ContainingType != null)
+            {
+                return getContainingTypes(symbol.ContainingType).Append(symbol.ContainingType);
+            }
+
+            return Array.Empty<ITypeSymbol>();
+        }
+    }
+    public static String GetContainingClassTail(this ITypeSymbol nestedType)
+    {
+        var resultBuilder = new StringBuilder();
+        var containingType = nestedType.ContainingType;
+        while(containingType != null)
+        {
+            _ = resultBuilder.AppendLine("}");
+
+            containingType = containingType.ContainingType;
+        }
+
+        var result = resultBuilder.ToString();
+
+        return result;
+    }
 
     public static StringBuilder AppendJoin<T>(this StringBuilder builder, String separator, IEnumerable<T> values)
     {
@@ -124,5 +172,33 @@ internal static class Extensions
         }
 
         return builder;
+    }
+
+    public static Boolean InheritsFrom(this ITypeSymbol subtype, ITypeSymbol supertype)
+    {
+        var baseTypes = getBaseTypes(subtype);
+        if(baseTypes.Contains(supertype, SymbolEqualityComparer.Default))
+        {
+            return true;
+        }
+
+        var interfaces = subtype.AllInterfaces;
+        if(interfaces.Contains(supertype, SymbolEqualityComparer.Default))
+        {
+            return true;
+        }
+
+        return false;
+
+        static IEnumerable<INamedTypeSymbol> getBaseTypes(ITypeSymbol symbol)
+        {
+            var baseType = symbol.BaseType;
+            while(baseType != null)
+            {
+                yield return baseType;
+
+                baseType = baseType.BaseType;
+            }
+        }
     }
 }

@@ -2,12 +2,12 @@
 
 using System.Threading;
 
-readonly struct ModelFactoryInvocationContext
+readonly struct ModelCreationContext
 {
     public readonly ModelFactoryParameters Parameters;
     public readonly CancellationToken CancellationToken;
 
-    public ModelFactoryInvocationContext(ModelFactoryParameters parameters, CancellationToken cancellationToken)
+    public ModelCreationContext(ModelFactoryParameters parameters, CancellationToken cancellationToken)
     {
         Parameters = parameters;
         CancellationToken = cancellationToken;

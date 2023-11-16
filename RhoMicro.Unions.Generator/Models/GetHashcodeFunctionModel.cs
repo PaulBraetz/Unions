@@ -12,10 +12,14 @@ readonly struct GetHashcodeFunctionModel
     private GetHashcodeFunctionModel(String sourceText) => SourceText = sourceText;
     public readonly String SourceText;
 
-    public static void Integrate(ModelIntegrationContext<GetHashcodeFunctionModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    private static void Integrate(ModelIntegrationContext<GetHashcodeFunctionModel> context) =>
         context.Source.SetGethashcodeFunction(context.Model);
 
-    public static GetHashcodeFunctionModel Create(ModelFactoryInvocationContext context)
+    private static GetHashcodeFunctionModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes;
         var target = context.Parameters.TargetSymbol;

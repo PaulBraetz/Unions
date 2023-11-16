@@ -18,9 +18,15 @@ sealed partial class SourceModelBuilder
     private String? _targetStructOrClass;
     private String? _targetNamespace;
     private String? _targetAccessibility;
+    private String? _containingClassesHead;
+    private String? _containingClassesTail;
+
     public void SetTarget(ITypeSymbol symbol)
     {
         _isInitialized = true;
+
+        _containingClassesHead = symbol.GetContainingClassHead();
+        _containingClassesTail = symbol.GetContainingClassTail();
 
         _targetName = symbol.Name;
         _targetStructOrClass = symbol.IsValueType ?
@@ -28,7 +34,7 @@ sealed partial class SourceModelBuilder
             "class";
         _targetNamespace = symbol.ContainingNamespace.IsGlobalNamespace ?
             String.Empty :
-            $"namespace {symbol.ContainingNamespace.ToFullString()};";
+            $"namespace {symbol.ContainingNamespace.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted))};";
         _targetAccessibility = SyntaxFacts.GetText(symbol.DeclaredAccessibility);
     }
 
@@ -128,6 +134,14 @@ sealed partial class SourceModelBuilder
         _isAsFunctions = model.SourceText;
     }
 
+    private String? _layout;
+    public void SetLayout(LayoutModel model)
+    {
+        _isInitialized = true;
+
+        _layout = model.SourceText;
+    }
+
     public Model Build()
     {
         if(!_isInitialized)
@@ -138,6 +152,8 @@ sealed partial class SourceModelBuilder
         var builder = new StringBuilder()
             .AppendLine("#pragma warning disable")
             .AppendLine(_targetNamespace)
+            .AppendLine(_containingClassesHead)
+            .AppendLine(_layout)
             .Append(_targetAccessibility).Append(" partial ").Append(_targetStructOrClass).Append(' ').AppendLine(_targetName).AppendLine(_interfaceImplementation)
             .Append('{')
             .AppendLine("#region Nested Types")
@@ -164,6 +180,7 @@ sealed partial class SourceModelBuilder
             .AppendLine(_conversionOperators)
             .AppendLine("#endregion")
             .AppendLine("}")
+            .AppendLine(_containingClassesTail)
             .AppendLine(ConstantSources.Util);
 
         var source = builder.ToString();
@@ -199,6 +216,9 @@ sealed partial class SourceModelBuilder
         _constructors = _constructors,
         _nestedTypes = _nestedTypes,
         _interfaceImplementation = _interfaceImplementation,
-        _isAsFunctions = _isAsFunctions
+        _isAsFunctions = _isAsFunctions,
+        _layout = _layout,
+        _containingClassesHead = _containingClassesHead,
+        _containingClassesTail = _containingClassesTail
     };
 }

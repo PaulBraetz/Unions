@@ -6,21 +6,28 @@ using RhoMicro.Unions;
 using RhoMicro.Unions.Generator;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 readonly struct InterfaceImplementationModel
 {
     private InterfaceImplementationModel(String sourceText) => SourceText = sourceText;
+
     public readonly String SourceText;
 
-    public static void Integrate(ModelIntegrationContext<InterfaceImplementationModel> context) =>
+    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
+        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+        => provider.SelectCarry(Create, Integrate);
+
+    static void Integrate(ModelIntegrationContext<InterfaceImplementationModel> context) => 
         context.Source.SetInterfaceImplementation(context.Model);
 
-    public static InterfaceImplementationModel Create(ModelFactoryInvocationContext context)
+    static InterfaceImplementationModel Create(ModelCreationContext context)
     {
         var attributes = context.Parameters.Attributes;
         var target = context.Parameters.TargetSymbol;
+        var targetDeclaration = context.Parameters.TargetDeclaration;
 
         var sourceTextBuilder = attributes.AllUnionTypeAttributes
             .Select((a, i) => (Name: a.RepresentableTypeSymbol.ToFullString(), Index: i))
@@ -34,7 +41,9 @@ readonly struct InterfaceImplementationModel
 
         if(!(attributes.AllUnionTypeAttributes.Count == 1 && attributes.AllUnionTypeAttributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
         {
+            var omissions = context.Parameters.OperatorOmissions.AllOmissions;
             _ = attributes.AllUnionTypeAttributes
+                .Where(a => !omissions.Contains(a))
                 .Select(a => a.RepresentableTypeSymbol.ToFullString())
                 .Aggregate(
                     sourceTextBuilder,
