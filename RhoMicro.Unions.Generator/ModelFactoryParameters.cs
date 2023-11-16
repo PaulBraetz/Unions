@@ -37,7 +37,7 @@ sealed class ModelFactoryParameters : IEquatable<ModelFactoryParameters>
                 $"targetDeclaration {targetDeclaration.Identifier.Text} could not be retrieved as an instance of ITypeSymbol from the semantic model provided.",
                 nameof(targetDeclaration));
 
-        var attributes = AttributesModel.Create(targetSymbol.GetAttributes().OfUnionTypeAttribute());
+        var attributes = AttributesModel.Create(targetSymbol);
         var result = new ModelFactoryParameters(targetSymbol, targetDeclaration, semanticModel, attributes);
 
         return result;

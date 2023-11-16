@@ -61,36 +61,36 @@ namespace RhoMicro.Unions.Generator.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Union types must be declared using at least one instance of the &apos;UnionType&apos; attribute..
+        ///   Looks up a localized global::System.String similar to Union types must be declared using at least one instance of the &apos;UnionType&apos; attribute..
         /// </summary>
-        internal static string MissingUnionTypeAttribute_Message {
+        internal static global::System.String MissingUnionTypeAttribute_Message {
             get {
                 return ResourceManager.GetString("MissingUnionTypeAttribute_Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Missing &apos;UnionType&apos; Attribute.
+        ///   Looks up a localized global::System.String similar to Missing &apos;UnionType&apos; Attribute.
         /// </summary>
-        internal static string MissingUnionTypeAttribute_Title {
+        internal static global::System.String MissingUnionTypeAttribute_Title {
             get {
                 return ResourceManager.GetString("MissingUnionTypeAttribute_Title", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Union types must be declared using the &apos;partial&apos; keyword..
+        ///   Looks up a localized global::System.String similar to Union types must be declared using the &apos;partial&apos; keyword..
         /// </summary>
-        internal static string NonPartialDeclaration_Message {
+        internal static global::System.String NonPartialDeclaration_Message {
             get {
                 return ResourceManager.GetString("NonPartialDeclaration_Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Nonpartial Union Declaration.
+        ///   Looks up a localized global::System.String similar to Nonpartial Union Declaration.
         /// </summary>
-        internal static string NonPartialDeclaration_Title {
+        internal static global::System.String NonPartialDeclaration_Title {
             get {
                 return ResourceManager.GetString("NonPartialDeclaration_Title", resourceCulture);
             }

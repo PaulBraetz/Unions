@@ -120,12 +120,12 @@ sealed partial class SourceModelBuilder
         _matchFunction = model.SourceText;
     }
 
-    private String? _getDebugStringFunction;
-    public void SetGetDebugStringFunction(GetDebugStringFunctionModel model)
+    private String? _isAsFunctions;
+    public void SetIsAsFunctions(IsAsFunctionsModel model)
     {
         _isInitialized = true;
 
-        _getDebugStringFunction = model.SourceText;
+        _isAsFunctions = model.SourceText;
     }
 
     public Model Build()
@@ -137,10 +137,7 @@ sealed partial class SourceModelBuilder
 
         var builder = new StringBuilder()
             .AppendLine("#pragma warning disable")
-            .AppendLine("using System.Runtime.InteropServices;")
-            .AppendLine("using System;")
             .AppendLine(_targetNamespace)
-            .AppendLine("[System.Diagnostics.DebuggerDisplay(\"{GetDebugString()}\")]")
             .Append(_targetAccessibility).Append(" partial ").Append(_targetStructOrClass).Append(' ').AppendLine(_targetName).AppendLine(_interfaceImplementation)
             .Append('{')
             .AppendLine("#region Nested Types")
@@ -156,7 +153,7 @@ sealed partial class SourceModelBuilder
             .AppendLine(_downCastFunction)
             .AppendLine(_switchMethod)
             .AppendLine(_matchFunction)
-            .AppendLine(_getDebugStringFunction)
+            .AppendLine(_isAsFunctions)
             .AppendLine("#endregion")
             .AppendLine("#region Overrides & Equality")
             .Append(_toStringFunction)
@@ -166,7 +163,8 @@ sealed partial class SourceModelBuilder
             .AppendLine("#region Conversion Operators")
             .AppendLine(_conversionOperators)
             .AppendLine("#endregion")
-            .Append('}');
+            .AppendLine("}")
+            .AppendLine(ConstantSources.Util);
 
         var source = builder.ToString();
         var formattedSource = CSharpSyntaxTree.ParseText(source)
@@ -185,6 +183,7 @@ sealed partial class SourceModelBuilder
 
     public SourceModelBuilder Clone() => new()
     {
+        _isInitialized = _isInitialized,
         _targetName = _targetName,
         _targetStructOrClass = _targetStructOrClass,
         _targetNamespace = _targetNamespace,
@@ -200,6 +199,6 @@ sealed partial class SourceModelBuilder
         _constructors = _constructors,
         _nestedTypes = _nestedTypes,
         _interfaceImplementation = _interfaceImplementation,
-        _getDebugStringFunction = _getDebugStringFunction
+        _isAsFunctions = _isAsFunctions
     };
 }

@@ -20,9 +20,22 @@ internal static partial class Diagnostics
         TooManyTypes = 7,
         ImplicitConversionOptionOnNonSolitary = 8,
         ImplicitConversionOptionOnSolitary = 9,
-        InvalidAttributeTarget = 10
+        InvalidAttributeTarget = 10,
+        AliasCollision = 11,
+        UnionTypeSettingsOnNonUnionType = 12
     }
 
+    public static Diagnostic UnionTypeSettingsOnNonUnionType(Location location) =>
+        Create(
+            Id.UnionTypeSettingsOnNonUnionType,
+            location,
+            DiagnosticSeverity.Warning);
+    public static Diagnostic AliasCollision(Location location, String representableTypeName) =>
+        Create(
+            Id.AliasCollision,
+            location,
+            DiagnosticSeverity.Error,
+            representableTypeName);
     public static Diagnostic InvalidAttributeTarget(Location location) =>
         Create(
             Id.InvalidAttributeTarget,

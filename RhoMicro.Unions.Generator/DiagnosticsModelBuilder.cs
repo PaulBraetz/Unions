@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Threading;
 using RhoMicro.Unions;
 using System.Reflection;
+using System.Linq.Expressions;
 
 sealed class DiagnosticsModelBuilder
 {
@@ -62,18 +63,37 @@ sealed class DiagnosticsModelBuilder
         var diagnostic = Diagnostics.InvalidAttributeTarget(location);
         _ = Add(diagnostic);
     }
-    public void DiagnoseImplicitConversionIfSolitary(ModelFactoryParameters context, CancellationToken token)
-    {
-        token.ThrowIfCancellationRequested();
 
-        var attributes = context.Attributes.AllUnionTypeAttributes;
-        var location = context.TargetDeclaration.GetLocation();
+    #region Auto Diagnosers
+    public void DiagnoseUnionTypeSettingsOnNonUnionType(ModelFactoryParameters parameters)
+    {
+        var unionTypeAttributes = parameters.Attributes.AllUnionTypeAttributes;
+        var relationAttributes = parameters.Attributes.AllRelationAttributes;
+
+        if(unionTypeAttributes.Count > 0 ||
+           relationAttributes.Count > 0 ||
+           !parameters.TargetSymbol
+            .GetAttributes()
+            .OfUnionTypeSettingsAttribute()
+            .Any())
+        {
+            return;
+        }
+
+        var location = parameters.TargetDeclaration.GetLocation();
+        var diagnostics = Diagnostics.UnionTypeSettingsOnNonUnionType(location);
+        _ = Add(diagnostics);
+    }
+    public void DiagnoseImplicitConversionIfSolitary(ModelFactoryParameters parameters)
+    {
+        var attributes = parameters.Attributes.AllUnionTypeAttributes;
+        var location = parameters.TargetDeclaration.GetLocation();
 
         if(attributes.Count == 1 &&
            attributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary))
         {
             var diagnostic = Diagnostics.ImplicitConversionOptionOnSolitary(
-                context.TargetSymbol.Name,
+                parameters.TargetSymbol.Name,
                 attributes[0].RepresentableTypeSymbol.Name,
                 location);
             _ = Add(diagnostic);
@@ -84,97 +104,122 @@ sealed class DiagnosticsModelBuilder
             _ = Add(diagnostic);
         }
     }
-    public void DiagnoseUnionTypeCount(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseUnionTypeCount(ModelFactoryParameters parameters)
     {
-        token.ThrowIfCancellationRequested();
-
-        var count = context.Attributes.AllUnionTypeAttributes.Count;
+        var count = parameters.Attributes.AllUnionTypeAttributes.Count;
         if(count <= Byte.MaxValue)
             return;
 
-        var location = context.TargetDeclaration.GetLocation();
+        var location = parameters.TargetDeclaration.GetLocation();
         var diagnostics = Diagnostics.TooManyTypes(location);
         _ = Add(diagnostics);
     }
-    public void DiagnosePartiality(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnosePartiality(ModelFactoryParameters parameters)
     {
-        token.ThrowIfCancellationRequested();
-
-        if(context.TargetDeclaration.IsPartial())
+        if(parameters.TargetDeclaration.IsPartial())
             return;
 
-        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var location = parameters.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.NonPartialDeclaration(location);
         _ = Add(diagnostics);
     }
-    public void DiagnoseNonStatic(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseNonStatic(ModelFactoryParameters parameters)
     {
-        token.ThrowIfCancellationRequested();
-
-        if(!context.TargetDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
+        if(!parameters.TargetDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
             return;
 
-        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var location = parameters.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.StaticTarget(location);
         _ = Add(diagnostics);
     }
-    public void DiagnoseNonRecord(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseNonRecord(ModelFactoryParameters parameters)
     {
-        if(!context.TargetDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
-            !context.TargetDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
+        if(!parameters.TargetDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
+            !parameters.TargetDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
         {
             return;
         }
 
-        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var location = parameters.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.RecordTarget(location);
         _ = Add(diagnostics);
     }
-    public void DiagnoseUnionTypeAttribute(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseUnionTypeAttribute(ModelFactoryParameters parameters)
     {
-        token.ThrowIfCancellationRequested();
-
-        if(context.Attributes.AllUnionTypeAttributes.Count > 0)
+        if(parameters.Attributes.AllUnionTypeAttributes.Count > 0)
             return;
 
-        var location = context.TargetDeclaration.Identifier.GetLocation();
+        var location = parameters.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.MissingUnionTypeAttribute(location);
         _ = Add(diagnostics);
     }
-    public void DiagnoseUniqueUnionTypeAttributes(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseUniqueUnionTypeAttributes(ModelFactoryParameters parameters)
     {
-        token.ThrowIfCancellationRequested();
-
-        _ = context.Attributes.AllUnionTypeAttributes
+        _ = parameters.Attributes.AllUnionTypeAttributes
             .GroupBy(t => t.RepresentableTypeSymbol.ToFullString())
-            .Select(g => (Name: g.Key, Locations: g.Select(t => context.TargetDeclaration.GetLocation()).ToArray()))
+            .Select(g => (Name: g.Key, Locations: g.Select(t => parameters.TargetDeclaration.GetLocation()).ToArray()))
             .Where(t => t.Locations.Length > 1)
             .SelectMany(t => t.Locations.Skip(1).Select(l => Diagnostics.DuplicateUnionTypeAttributes(t.Name, l)))
             .Aggregate(this, (b, d) => b.Add(d));
     }
-
-    //TODO:
-    //detect redundant subset/superset (research IsAssignableFrom equivalent in roslyn)
-    //diagnose faulty subset/superset declarations
-    //  -> error if superset of disjunct union
-    //  -> error if subset of disjunct union
-
-    internal void DiagnoseAll(ModelFactoryParameters context, CancellationToken token)
+    public void DiagnoseAliasCollisions(ModelFactoryParameters parameters)
     {
-        var diagnosers = new[]
+        var duplicates = parameters.Attributes.AllUnionTypeAttributes
+            .GroupBy(a => a.SafeAlias)
+            .Where(g => g.Skip(1).Any())
+            .Select(g => g.First().RepresentableTypeSymbol.Name);
+        if(!duplicates.Any())
         {
-            DiagnoseImplicitConversionIfSolitary,
-            DiagnoseUnionTypeCount,
-            DiagnosePartiality,
-            DiagnosePartiality,
-            DiagnoseNonStatic,
-            DiagnoseNonRecord,
-            DiagnoseUnionTypeAttribute,
-            DiagnoseUniqueUnionTypeAttributes
-        };
+            return;
+        }
 
-        foreach(var d in diagnosers)
-            d.Invoke(context, token);
+        var location = parameters.TargetDeclaration.GetLocation();
+        _ = duplicates.Select(d => Diagnostics.AliasCollision(location, d))
+            .Aggregate(this, (b, d) => b.Add(d));
+    }
+    #endregion
+
+    private static readonly IEnumerable<Action<DiagnosticsModelBuilder, ModelFactoryParameters, CancellationToken>> _diagnosers = GetDiagnosers();
+    private static List<Action<DiagnosticsModelBuilder, ModelFactoryParameters, CancellationToken>> GetDiagnosers()
+    {
+        var result = typeof(DiagnosticsModelBuilder)
+                .GetMethods()
+                .Where(m => m.ReturnType == typeof(void))
+                .Where(m =>
+                {
+                    var parameters = m.GetParameters();
+                    var result = parameters.Length == 1 &&
+                        parameters[0].ParameterType == typeof(ModelFactoryParameters);
+
+                    return result;
+                })
+                .Select(m =>
+                {
+                    var instanceParam = Expression.Parameter(typeof(DiagnosticsModelBuilder));
+                    var parametersParam = Expression.Parameter(typeof(ModelFactoryParameters));
+                    var tokenParam = Expression.Parameter(typeof(CancellationToken));
+
+                    var throwMethod = typeof(CancellationToken).GetMethod(nameof(CancellationToken.ThrowIfCancellationRequested));
+                    var throwExpr = Expression.Call(tokenParam, throwMethod);
+
+                    var callExpr = Expression.Call(instanceParam, m, parametersParam);
+
+                    var body = Expression.Block(throwExpr, callExpr);
+
+                    var lambda = Expression.Lambda(body, instanceParam, parametersParam, tokenParam);
+                    var result = lambda.Compile();
+
+                    return result;
+                })
+                .Cast<Action<DiagnosticsModelBuilder, ModelFactoryParameters, CancellationToken>>()
+                .ToList();
+
+        return result;
+    }
+    internal void DiagnoseAll(ModelFactoryParameters parameters, CancellationToken token)
+    {
+        foreach(var d in _diagnosers)
+            d.Invoke(this, parameters, token);
     }
 
     public DiagnosticsModelBuilder Add(Diagnostic diagnostic)

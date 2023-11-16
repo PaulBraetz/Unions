@@ -4,7 +4,21 @@ using System;
 
 internal static class ConstantSources
 {
+    public const String Util =
+    """
+    file static class Util
+    {
+        public static TTo UnsafeConvert<TFrom, TTo>(in TFrom from)
+        {
+            var copy = from;
+
+            return global::System.Runtime.CompilerServices.Unsafe.As<TFrom, TTo>(ref copy);
+        }
+    }
+    """;
     public const String UnionInterfaceName = "IUnion";
     public const String InvalidTagStateThrow = "throw new global::System.InvalidOperationException(\"Unable to determine the represented value. The union type was likely not initialized correctly.\")";
-    public const String InvalidExplicitCastThrow = "throw new global::System.InvalidOperationException(\"The union type instance cannot be converted to an instance of {0}.\")";
+    private const String _invalidExplicitCastThrow = "throw new global::System.InvalidOperationException($\"The union type instance cannot be converted to an instance of {0}{1}{2}.\")";
+    public static String InvalidConversionThrow(String typeName) =>
+        String.Format(_invalidExplicitCastThrow, "{", typeName, "}");
 }

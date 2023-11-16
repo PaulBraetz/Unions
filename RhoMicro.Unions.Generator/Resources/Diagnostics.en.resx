@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AliasCollision_Message" xml:space="preserve">
+    <value>An alias collision has been detected for the representable type `{0}`. Make sure that for colliding type names (excluding generic arguments) you provide a unique alias. If no explicit alias is provided, the simple type name of the representable type will be used, e.g.: `List` will be used for variables of the `List&lt;T&gt;` type. Aliae are used for parameter, variable, enum and field names.</value>
+  </data>
+  <data name="AliasCollision_Title" xml:space="preserve">
+    <value>Alias Collision</value>
+  </data>
   <data name="DuplicateUnionTypeAttributes_Message" xml:space="preserve">
     <value>Union types may not be declared using duplicate 'UnionType' attributes of the same representable type ({0}).</value>
   </data>
@@ -170,5 +176,11 @@
   </data>
   <data name="StaticTarget_Title" xml:space="preserve">
     <value>Static Union Type Declaration</value>
+  </data>
+  <data name="UnionTypeSettingsOnNonUnionType_Message" xml:space="preserve">
+    <value>The union type settings attribute will be ignored because the target type is not a union type.</value>
+  </data>
+  <data name="UnionTypeSettingsOnNonUnionType_Title" xml:space="preserve">
+    <value>Union Type Settings Ignored</value>
   </data>
 </root>

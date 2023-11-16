@@ -17,7 +17,29 @@ internal static class Extensions
     public static Boolean HasUnionTypeAttribute(this ITypeSymbol symbol) =>
         symbol.GetAttributes().OfUnionTypeAttribute().Any();
     public static String ToFullString(this ISymbol symbol) =>
-        symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
+    .WithMiscellaneousOptions(
+    //    /*
+    //         get rid of special types
+    //
+    //         10110
+    //    NAND 00100
+    //      => 10010
+
+    //         10110
+    //      &! 00100
+    //      => 10010
+
+    //         00100
+    //       ^ 11111
+    //      => 11011
+
+    //         10110
+    //       & 11011
+    //      => 10010
+    //*/
+    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
+    (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue)));
     public static StringBuilder AppendSymbol(this StringBuilder builder, ITypeSymbol symbol) =>
         builder.Append(symbol.ToFullString());
     public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
@@ -30,6 +52,8 @@ internal static class Extensions
         Action<ModelIntegrationContext<TModel>> modelIntegration) =>
         provider.SelectCarry((c, d, s, t) =>
         {
+            t.ThrowIfCancellationRequested();
+
             var invocationContext = new ModelFactoryInvocationContext(c, t);
             var model = modelFactory.Invoke(invocationContext);
 
@@ -57,6 +81,10 @@ internal static class Extensions
 
         return builder;
     }
+    public static StringBuilder AppendAggregate<T>(
+        this StringBuilder builder,
+        IEnumerable<T> values,
+        Func<StringBuilder, T, StringBuilder> aggregation) => values.Aggregate(builder, aggregation);
     public static StringBuilder AppendAggregateJoin<T>(
         this StringBuilder builder,
         String separator,

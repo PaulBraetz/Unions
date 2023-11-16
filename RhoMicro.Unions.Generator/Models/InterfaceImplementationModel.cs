@@ -25,7 +25,7 @@ readonly struct InterfaceImplementationModel
         var sourceTextBuilder = attributes.AllUnionTypeAttributes
             .Select((a, i) => (Name: a.RepresentableTypeSymbol.ToFullString(), Index: i))
             .Aggregate(
-                new StringBuilder(":global::RhoMicro.Unions.Abstractions.IUnion<"),
+                new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<"),
                 (b, n) => b.Append(n.Name).Append(n.Index != attributes.AllUnionTypeAttributes.Count - 1 ? "," : String.Empty))
             .AppendLine(">,")
             .Append("global::System.IEquatable<")

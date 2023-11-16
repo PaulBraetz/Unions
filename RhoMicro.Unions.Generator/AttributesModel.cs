@@ -14,35 +14,40 @@ sealed class AttributesModel : IEquatable<AttributesModel>
     public readonly IReadOnlyList<UnionTypeAttribute> ValueTypeAttributes;
     public readonly IReadOnlyList<UnionTypeAttribute> AllUnionTypeAttributes;
 
-    public readonly Boolean HasSingleAttribute;
-    public readonly Boolean HasValueTypeAttributes;
-    public readonly Boolean HasReferenceTypeAttributes;
+    public readonly IReadOnlyList<RelationAttribute> AllRelationAttributes;
+
+    public readonly UnionTypeSettingsAttribute Settings;
 
     private AttributesModel(
         IReadOnlyList<UnionTypeAttribute> referenceTypeAttributes,
         IReadOnlyList<UnionTypeAttribute> valueTypeAttributes,
-        IReadOnlyList<UnionTypeAttribute> allAttributes)
+        IReadOnlyList<UnionTypeAttribute> allUnionTypeAttributes,
+        IReadOnlyList<RelationAttribute> allRelationAttributes,
+        UnionTypeSettingsAttribute settings)
     {
         ReferenceTypeAttributes = referenceTypeAttributes;
         ValueTypeAttributes = valueTypeAttributes;
-        AllUnionTypeAttributes = allAttributes;
-
-        HasSingleAttribute = AllUnionTypeAttributes.Count == 1;
-        HasValueTypeAttributes = ValueTypeAttributes.Count > 0;
-        HasReferenceTypeAttributes = ReferenceTypeAttributes.Count > 0;
+        AllUnionTypeAttributes = allUnionTypeAttributes;
+        AllRelationAttributes = allRelationAttributes;
+        Settings = settings;
     }
 
-    public static AttributesModel Create(IEnumerable<UnionTypeAttribute> attributes)
+    public static AttributesModel Create(ITypeSymbol target)
     {
-        var orderedAttributes = attributes
+        var attributes = target.GetAttributes();
+
+        var allRelationAttributes = attributes.OfRelationAttribute().ToList();
+
+        var orderedUnionTypeAttributes = attributes
+            .OfUnionTypeAttribute()
             .OrderBy(a => a.RepresentableTypeSymbol.IsValueType)
             .ThenBy(a => a.RepresentableTypeSymbol.ToFullString());
 
-        var allAttributes = new List<UnionTypeAttribute>();
+        var allUnionTypeAttributes = new List<UnionTypeAttribute>();
         var referenceTypeAttributes = new List<UnionTypeAttribute>();
         var valueTypeAttributes = new List<UnionTypeAttribute>();
 
-        foreach(var attribute in orderedAttributes)
+        foreach(var attribute in orderedUnionTypeAttributes)
         {
             if(attribute.RepresentableTypeSymbol.IsValueType)
             {
@@ -52,10 +57,18 @@ sealed class AttributesModel : IEquatable<AttributesModel>
                 referenceTypeAttributes.Add(attribute);
             }
 
-            allAttributes.Add(attribute);
+            allUnionTypeAttributes.Add(attribute);
         }
 
-        var result = new AttributesModel(referenceTypeAttributes, valueTypeAttributes, allAttributes);
+        var settings = attributes.OfUnionTypeSettingsAttribute().SingleOrDefault() ??
+            new UnionTypeSettingsAttribute();
+
+        var result = new AttributesModel(
+            referenceTypeAttributes,
+            valueTypeAttributes,
+            allUnionTypeAttributes,
+            allRelationAttributes,
+            settings);
 
         return result;
     }
@@ -64,11 +77,13 @@ sealed class AttributesModel : IEquatable<AttributesModel>
         obj is AttributesModel other && Equals(other);
     public Boolean Equals(AttributesModel other) =>
         other is not null &&
-        other.AllUnionTypeAttributes.SequenceEqual(AllUnionTypeAttributes);
+        other.AllUnionTypeAttributes.SequenceEqual(AllUnionTypeAttributes) &&
+        other.AllRelationAttributes.SequenceEqual(AllRelationAttributes);
 
     public override Int32 GetHashCode()
     {
         var hashCode = AllUnionTypeAttributes.Aggregate(-40951477, (h, a) => h * -1521134295 + a.GetHashCode());
+        hashCode = AllRelationAttributes.Aggregate(hashCode, (h, a) => h * -1521134295 + a.GetHashCode());
 
         return hashCode;
     }

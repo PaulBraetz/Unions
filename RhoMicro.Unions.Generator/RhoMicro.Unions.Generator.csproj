@@ -35,7 +35,7 @@
 
 	<PropertyGroup>
 		<!--'.0' required for auto source gen updater-->
-		<AssemblyName>$(MSBuildProjectName).147</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName).201</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 
@@ -51,9 +51,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Include="..\RhoMicro.Unions\SubsetOfAttribute.cs" Link="Attributes\SubsetOfAttribute.cs" />
-		<Compile Include="..\RhoMicro.Unions\SupersetOfAttribute.cs" Link="Attributes\SupersetOfAttribute.cs" />
+		<Compile Include="..\RhoMicro.Unions\RelationAttribute.cs" Link="Attributes\RelationAttribute.cs" />
 		<Compile Include="..\RhoMicro.Unions\UnionTypeAttribute.cs" Link="Attributes\UnionTypeAttribute.cs" />
+		<Compile Include="..\RhoMicro.Unions\UnionTypeSettingsAttribute.cs" Link="Attributes\UnionTypeSettingsAttribute.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

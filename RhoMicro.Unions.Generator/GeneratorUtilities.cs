@@ -16,10 +16,10 @@ internal static class GeneratorUtilities
     {
         nameof(UnionTypeAttribute),
         nameof(UnionTypeAttribute).Substring(0, nameof(UnionTypeAttribute).Length-nameof(Attribute).Length),
-        nameof(SupersetOfAttribute),
-        nameof(SupersetOfAttribute).Substring(0, nameof(SubsetOfAttribute).Length-nameof(Attribute).Length),
-        nameof(SubsetOfAttribute),
-        nameof(SubsetOfAttribute).Substring(0, nameof(SubsetOfAttribute).Length-nameof(Attribute).Length)
+        nameof(UnionTypeSettingsAttribute),
+        nameof(UnionTypeSettingsAttribute).Substring(0, nameof(UnionTypeSettingsAttribute).Length-nameof(Attribute).Length),
+        nameof(RelationAttribute),
+        nameof(RelationAttribute).Substring(0, nameof(RelationAttribute).Length-nameof(Attribute).Length)
     };
 
     public static Boolean IsUnionDeclaration(SyntaxNode node, CancellationToken _)

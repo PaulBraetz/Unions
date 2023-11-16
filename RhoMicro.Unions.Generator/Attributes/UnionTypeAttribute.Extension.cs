@@ -19,6 +19,10 @@ public partial class UnionTypeAttribute : IEquatable<UnionTypeAttribute?>
 
     private String _safeAlias;
 
+    public String GetConvertedInstanceVariableExpression(ITypeSymbol target, String targetType, String instance = "this") =>
+        RepresentableTypeSymbol.IsValueType ?
+        $"Util.UnsafeConvert<{SafeAlias}, {targetType}>({instance}.__valueTypeContainer.{SafeAlias})" :
+        $"(({targetType}){instance}.__referenceTypeContainer)";
     public String GetInstanceVariableExpression(ITypeSymbol target, String instance = "this") =>
         RepresentableTypeSymbol.IsValueType ?
         $"({instance}.__valueTypeContainer.{SafeAlias})" :

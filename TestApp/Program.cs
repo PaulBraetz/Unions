@@ -1,31 +1,44 @@
 using RhoMicro.Unions;
+using OneOf;
+using System.Globalization;
 
-Union union = 400;
-Console.WriteLine(union);
-union = "huh";
+CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
-var eqUnion = union.DownCast<EquivalentUnion>();
-Console.WriteLine(eqUnion);
-
-[UnionType(typeof(String))]
-[UnionType(typeof(Int32))]
-readonly partial struct Union
+unsafe
 {
-
+    foreach(var t in new[]
+    {
+        //(((Union)0).ToString(), sizeof(Union)),
+        //(((Union_2)0).ToString(), sizeof(Union_2)),
+        ("Tag", sizeof(Byte)),
+        (nameof(Int16), sizeof(Int16)),
+        (nameof(Int32), sizeof(Int32)),
+        (nameof(Int64), sizeof(Int64)),
+        (nameof(Object), sizeof(Object)),
+        (((Union_3)0).ToString(), sizeof(Union_3))
+    })
+    {
+        Console.WriteLine($"sizeof({t.Item1}): {t.Item2}");
+    }
 }
 
+//[UnionType(typeof(Int16))]
+//readonly partial struct Union
+//{
+
+//}
+
+//[UnionType(typeof(Int32))]
+//[UnionType(typeof(Int16))]
+//readonly partial struct Union_2
+//{
+
+//}
+
+[UnionType(typeof(Int64))]
 [UnionType(typeof(Int32))]
-[UnionType(typeof(String))]
-readonly partial struct EquivalentUnion { }
-
-[UnionType(typeof(String))]
-readonly partial struct StringAlias
-{
-
-}
-
-[UnionType(typeof(Int32))]
-readonly partial struct Int32Alias
+[UnionType(typeof(Int16))]
+readonly partial struct Union_3
 {
 
 }

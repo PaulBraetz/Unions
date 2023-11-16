@@ -30,7 +30,7 @@ readonly struct ConstructorsModel
                     _ = b.Append("__tag = Tag.").Append(a.SafeAlias).AppendLine(";");
 
                 var result = (a.RepresentableTypeSymbol.IsValueType ?
-                    b.Append("__valueTypeContainer.").Append(a.SafeAlias).AppendLine(" = value;") :
+                    b.AppendLine("__valueTypeContainer = new(value);") :
                     b.AppendLine("__referenceTypeContainer = value;"))
                     .AppendLine("}");
 

@@ -59,9 +59,7 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
             {
                 _ = sourceTextBuilder
                     .Append(':')
-                    .Append(String.Format(
-                        ConstantSources.InvalidExplicitCastThrow,
-                        attribute.RepresentableTypeSymbol.ToFullString()));
+                    .Append(ConstantSources.InvalidConversionThrow($"typeof({attribute.RepresentableTypeSymbol.ToFullString()}).Name"));
             }
 
             _ = sourceTextBuilder.Append(';');
@@ -82,89 +80,50 @@ readonly struct ConversionOperatorModel : IEquatable<ConversionOperatorModel>
         return result;
     }
 
-    public static ConversionOperatorModel Create(
-        ITypeSymbol symbol,
-        IEnumerable<UnionTypeAttribute> unionTypeAttributes,
-        SupersetOfAttribute attribute)
-    {
-        var sourceTextBuilder = new StringBuilder("public static implicit operator ")
-            .AppendSymbol(symbol)
-            .Append('(')
-            .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-            .Append(" subsetUnion) => subsetUnion.DownCast<")
-            .AppendSymbol(symbol)
-            .AppendLine(">();")
-            .Append("public static explicit operator ")
-            .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-            .Append('(')
-            .AppendSymbol(symbol)
-            .AppendLine(" union) => union.__tag switch")
-            .AppendLine("{");
+    //public static ConversionOperatorModel Create(
+    //    ITypeSymbol symbol,
+    //    IEnumerable<UnionTypeAttribute> unionTypeAttributes,
+    //    RelationAttribute attribute)
+    //{
+    //    var sourceTextBuilder = new StringBuilder("public static implicit operator ")
+    //        .AppendSymbol(symbol)
+    //        .Append('(')
+    //        .AppendSymbol(attribute.SubsetUnionTypeSymbol)
+    //        .Append(" subsetUnion) => subsetUnion.DownCast<")
+    //        .AppendSymbol(symbol)
+    //        .AppendLine(">();")
+    //        .Append("public static explicit operator ")
+    //        .AppendSymbol(attribute.SubsetUnionTypeSymbol)
+    //        .Append('(')
+    //        .AppendSymbol(symbol)
+    //        .AppendLine(" union) => union.__tag switch")
+    //        .AppendLine("{");
 
-        foreach(var unionTypeAttribute in unionTypeAttributes)
-        {
-            _ = sourceTextBuilder.Append("Tag.")
-                .Append(unionTypeAttribute.SafeAlias)
-                .Append(" => ")
-                .AppendSymbol(attribute.SubsetUnionTypeSymbol)
-                .Append("union.__");
+    //    foreach(var unionTypeAttribute in unionTypeAttributes)
+    //    {
+    //        _ = sourceTextBuilder.Append("Tag.")
+    //            .Append(unionTypeAttribute.SafeAlias)
+    //            .Append(" => ")
+    //            .AppendSymbol(attribute.SubsetUnionTypeSymbol)
+    //            .Append("union.__");
 
-            _ = unionTypeAttribute.RepresentableTypeSymbol.IsValueType ?
-                sourceTextBuilder.Append("valueTypeContainer.")
-                    .Append(unionTypeAttribute.SafeAlias) :
-                sourceTextBuilder.Append("referenceTypeContainer");
+    //        _ = unionTypeAttribute.RepresentableTypeSymbol.IsValueType ?
+    //            sourceTextBuilder.Append("valueTypeContainer.")
+    //                .Append(unionTypeAttribute.SafeAlias) :
+    //            sourceTextBuilder.Append("referenceTypeContainer");
 
-            _ = sourceTextBuilder.AppendLine(",");
-        }
+    //        _ = sourceTextBuilder.AppendLine(",");
+    //    }
 
-        _ = sourceTextBuilder.Append("_ => ")
-            .Append(ConstantSources.InvalidTagStateThrow)
-            .AppendLine("};");
+    //    _ = sourceTextBuilder.Append("_ => ")
+    //        .Append(ConstantSources.InvalidTagStateThrow)
+    //        .AppendLine("};");
 
-        var sourceText = sourceTextBuilder.ToString();
-        var result = new ConversionOperatorModel(sourceText);
+    //    var sourceText = sourceTextBuilder.ToString();
+    //    var result = new ConversionOperatorModel(sourceText);
 
-        return result;
-    }
-
-    public static ConversionOperatorModel Create(
-        ITypeSymbol symbol,
-        IReadOnlyCollection<UnionTypeAttribute> unionTypeAttributes,
-        SubsetOfAttribute attribute)
-    {
-        //public static implicit operator Union(SubsetUnion subset) => subset.Match(static v => v);
-        //target is subset union here!
-        var sourceTextBuilder = new StringBuilder("public static implicit operator ")
-            .AppendSymbol(attribute.SupersetUnionTypeSymbol)
-            .Append('(')
-            .AppendSymbol(symbol)
-            .Append(" subsetUnion) => subsetUnion.Match(")
-            .Append(String.Join(",", Enumerable.Repeat("static v => v", unionTypeAttributes.Count)))
-            .AppendLine(");")
-            /*
-            public static explicit operator SubsetUnion(Union union) =>
-               union.Match(
-                   static v => v,
-                   static v => throw new InvalidOperationException(),
-                   static v => throw new InvalidOperationException(),
-                   static v => throw new InvalidOperationException());
-            */
-            .Append("public static explicit operator ")
-            .AppendSymbol(symbol)
-            .Append('(')
-            .AppendSymbol(attribute.SupersetUnionTypeSymbol)
-            .AppendLine(" union) => union.Match(");
-
-        foreach(var _ in attribute.SupersetUnionTypeSymbol.GetAttributes().OfUnionTypeAttribute())
-        {
-            //TODO
-        }
-
-        var sourceText = sourceTextBuilder.ToString();
-        var result = new ConversionOperatorModel(sourceText);
-
-        return result;
-    }
+    //    return result;
+    //}
 
     public override Boolean Equals(Object obj) => obj is ConversionOperatorModel model && Equals(model);
     public Boolean Equals(ConversionOperatorModel other) => SourceText == other.SourceText;

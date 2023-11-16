@@ -40,7 +40,7 @@ public sealed class Generator : IIncrementalGenerator
             .SelectCarry(DownCastFunctionModel.Create, DownCastFunctionModel.Integrate)
             .SelectCarry(SwitchMethodModel.Create, SwitchMethodModel.Integrate)
             .SelectCarry(MatchFunctionModel.Create, MatchFunctionModel.Integrate)
-            .SelectCarry(GetDebugStringFunctionModel.Create, GetDebugStringFunctionModel.Integrate);
+            .SelectCarry(IsAsFunctionsModel.Create, IsAsFunctionsModel.Integrate);
 
         context.RegisterSourceOutput(models, (c, sc) => sc.AddToContext(c));
     }

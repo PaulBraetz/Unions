@@ -31,19 +31,21 @@ readonly struct NestedTypesModel
 
         if(attributes.ValueTypeAttributes.Count > 0)
         {
-            _ = sourceTextBuilder.AppendLine("[StructLayout(LayoutKind.Explicit)]")
+            _ = sourceTextBuilder.AppendLine("[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Explicit)]")
                 .AppendLine("private struct ValueTypeContainer")
                 .AppendLine("{");
 
             _ = attributes.ValueTypeAttributes
                 .Aggregate(
                     sourceTextBuilder,
-                    (b, a) => b.AppendLine("[FieldOffset(0)]")
-                        .Append("public ")
+                    (b, a) => b.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]")
+                        .Append("public readonly ")
                         .Append(a.RepresentableTypeSymbol.ToFullString())
                         .Append(' ')
                         .Append(a.SafeAlias)
-                        .AppendLine(";"))
+                        .AppendLine(";")
+                        .Append("public ValueTypeContainer(").Append(a.RepresentableTypeSymbol.ToFullString()).Append(" value) => ")
+                        .Append(a.SafeAlias).AppendLine(" = value;"))
                 .AppendLine("}");
         }
 
