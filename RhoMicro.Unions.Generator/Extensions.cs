@@ -13,10 +13,28 @@ using System.Xml.Linq;
 
 internal static class Extensions
 {
+    public static String GetSpecificAccessibility(this ModelFactoryParameters parameters, UnionTypeAttribute attribute)
+    {
+        var accessibility = parameters.Attributes.Settings.ConstructorAccessibility;
+
+        if(accessibility == ConstructorAccessibilitySetting.PublicIfInconvertible &&
+           parameters.OperatorOmissions.AllOmissions.Contains(attribute))
+        {
+            accessibility = ConstructorAccessibilitySetting.Public;
+        }
+
+        var result = accessibility == ConstructorAccessibilitySetting.Public ?
+            "public" :
+            "private";
+
+        return result;
+    }
     public static Boolean IsError(this Diagnostic diagnostic) =>
         diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
     public static Boolean HasUnionTypeAttribute(this ITypeSymbol symbol) =>
         symbol.GetAttributes().OfUnionTypeAttribute().Any();
+    public static String ToDocCompatString(this ITypeSymbol symbol) =>
+        symbol.ToFullString().Replace("<", "&lt;").Replace(">", "&gt;");
     public static String ToFullString(this ISymbol symbol) =>
         symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
     .WithMiscellaneousOptions(

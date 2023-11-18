@@ -28,4 +28,8 @@
 	<ItemGroup>
 		<None Remove=".editorconfig"></None>
 	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.CodeAnalysis" Version="4.7.0" />
+	</ItemGroup>
 </Project>

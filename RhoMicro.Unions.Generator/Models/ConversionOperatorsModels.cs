@@ -91,7 +91,7 @@ readonly struct ConversionOperatorModel
         } else
         {
             _ = sourceTextBuilder.Append("public static implicit operator ")
-                .Append(attribute.RepresentableTypeSymbol.ToFullString())
+                .AppendSymbol(attribute.RepresentableTypeSymbol)
                 .Append('(')
                 .Append(target.Name)
                 .Append(" union) => ")

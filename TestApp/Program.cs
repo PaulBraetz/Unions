@@ -8,6 +8,7 @@ namespace TestApp
     using System.Globalization;
     using System.Numerics;
     using System.Collections;
+    using RhoMicro.Unions.Abstractions;
 
     internal partial class Program
     {
@@ -19,23 +20,27 @@ namespace TestApp
             {
                 foreach(var t in new[]
                 {
-                    (((Union1)0).ToString(), sizeof(Union1)),
-                    (((OneOf<Int16, Int32, Object, IEnumerable>)0).ToString(), sizeof(OneOf<Int16, Int32, Object, IEnumerable>))
+                    (((MyUnionType)0).ToString(), sizeof(MyUnionType)),
+                    (((OneOf<Int32, String, IConvertible, List<String>, List<Int32>>)0).ToString(),
+                    sizeof(OneOf<Int32, String, IConvertible, List<String>, List<Int32>>))
                 })
                 {
                     Console.WriteLine($"sizeof({t.Item1}): {t.Item2}");
                 }
             }
+
+            MyUnionType u = 32;
+            Console.WriteLine(u);
+            u = "Hello, World!";
+            Console.WriteLine(u);
         }
 
-        [UnionType(typeof(Int16))]
         [UnionType(typeof(Int32))]
-        [UnionType(typeof(Object))]
-        [UnionType(typeof(IEnumerable))]
-        [UnionTypeSettings(Layout = LayoutSetting.Small)]
-        readonly partial struct Union1
-        {
-
-        }
+        [UnionType(typeof(String))]
+        [UnionType(typeof(IConvertible))]
+        [UnionType(typeof(List<Int32>), Alias = "StringList")]
+        [UnionType(typeof(List<Int32>), Alias = "IntList")]
+        [UnionTypeSettings(EmitDiagnostics = false)]
+        readonly partial struct MyUnionType { }
     }
 }

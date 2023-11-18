@@ -28,6 +28,7 @@ sealed class DiagnosticsModelBuilder
         public readonly Boolean IsError;
         private readonly IEnumerable<Diagnostic> _diagnostics;
 
+        //TODO: fix diag errors
         public void AddToContext(SourceProductionContext context)
         {
             foreach(var diagnostic in _diagnostics)
@@ -170,6 +171,8 @@ sealed class DiagnosticsModelBuilder
         var diagnostics = Diagnostics.MissingUnionTypeAttribute(location);
         _ = Add(diagnostics);
     }
+    //TODO: support duplicate representable types
+    //-> no factories, impl/expl, ISupertype interface declarations
     public void DiagnoseUniqueUnionTypeAttributes(ModelFactoryParameters parameters)
     {
         _ = parameters.Attributes.AllUnionTypeAttributes
@@ -235,6 +238,11 @@ sealed class DiagnosticsModelBuilder
     }
     internal void DiagnoseAll(ModelFactoryParameters parameters, CancellationToken token)
     {
+        if(!parameters.Attributes.Settings.EmitDiagnostics)
+        {
+            return;
+        }
+
         foreach(var d in _diagnosers)
             d.Invoke(this, parameters, token);
     }

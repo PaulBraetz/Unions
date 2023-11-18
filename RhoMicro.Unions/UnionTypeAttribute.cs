@@ -43,7 +43,8 @@ public sealed partial class UnionTypeAttribute : Attribute
     /// For example, the represented type <see cref="List{T}"/> would be represented using names like
     /// <c>list</c>. Setting this property to <c>yourAlias</c> will instruct the generator to use
     /// member names like <c>yourAlias</c> instead of <c>list</c>. Use this property to avoid
-    /// name collisions in generated code.
+    /// name collisions in generated code. Since the alias will be used for member names, it will
+    /// only be taken into account if it is a valid identifier name.
     /// </summary>
     public String? Alias { get; set; }
 

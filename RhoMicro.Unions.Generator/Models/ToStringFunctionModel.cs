@@ -39,8 +39,8 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
             sourceTextBuilder.Append('<').Append(attributes[0].RepresentableTypeSymbol.Name).Append('>') :
             sourceTextBuilder.AppendAggregateJoin(" | ", attributes, (b, a) =>
                     b.Append("{(").Append("__tag == ").Append(a.TagValueExpression).Append('?')
-                    .Append("\"<").Append(a.RepresentableTypeSymbol.Name).Append(">\"").Append(':')
-                    .Append('\"').Append(a.RepresentableTypeSymbol.Name).Append("\")}"));
+                    .Append("\"<").Append(a.SafeAlias).Append(">\"").Append(':')
+                    .Append('\"').Append(a.SafeAlias).Append("\")}"));
 
         var sourceText = sourceTextBuilder
             .Append("){{{stringRepresentation}}}\"; return result;}")

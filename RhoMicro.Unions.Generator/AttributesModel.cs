@@ -39,6 +39,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
 
         var allRelationAttributes = attributes.OfRelationAttribute().ToList();
 
+        //DO NOT CHANGE THIS ALGO, compatibility depends on deterministic order of types
         var orderedUnionTypeAttributes = attributes
             .OfUnionTypeAttribute()
             .OrderBy(a => a.RepresentableTypeSymbol.IsValueType)

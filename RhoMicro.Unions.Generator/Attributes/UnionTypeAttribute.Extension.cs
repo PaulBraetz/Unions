@@ -3,6 +3,7 @@
 namespace RhoMicro.Unions;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 using RhoMicro.AttributeFactoryGenerator;
 using RhoMicro.Unions.Generator;
@@ -29,7 +30,10 @@ public partial class UnionTypeAttribute : IEquatable<UnionTypeAttribute?>
         $"(({RepresentableTypeSymbol.ToFullString()}){instance}.__referenceTypeContainer)";
     public String TagValueExpression => $"Tag.{SafeAlias}";
 
-    public String SafeAlias => _safeAlias ??= Alias ?? RepresentableTypeSymbol.Name;
+    public String SafeAlias => _safeAlias ??=
+        Alias != null && SyntaxFacts.IsValidIdentifier(Alias) ?
+        Alias :
+        RepresentableTypeSymbol.Name;
 
     public Boolean RepresentableTypeIsSupertypeOfTarget(
         ITypeSymbol target) =>

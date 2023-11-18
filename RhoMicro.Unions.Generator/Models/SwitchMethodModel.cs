@@ -31,7 +31,7 @@ readonly struct SwitchMethodModel
             .Aggregate(
                 new StringBuilder("public void Switch("),
                 (b, t) => b.Append("global::System.Action<")
-                    .Append(t.Attribute.RepresentableTypeSymbol.ToFullString())
+                    .AppendSymbol(t.Attribute.RepresentableTypeSymbol)
                     .Append("> on")
                     .Append(t.Attribute.SafeAlias)
                     .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))

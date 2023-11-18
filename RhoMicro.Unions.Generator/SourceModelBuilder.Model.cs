@@ -2,6 +2,10 @@
 
 using Microsoft.CodeAnalysis;
 
+using RhoMicro.Unions.Generator.Models;
+
+using System;
+
 sealed partial class SourceModelBuilder
 {
     public class Model

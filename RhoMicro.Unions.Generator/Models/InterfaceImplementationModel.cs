@@ -20,7 +20,7 @@ readonly struct InterfaceImplementationModel
         Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
         => provider.SelectCarry(Create, Integrate);
 
-    static void Integrate(ModelIntegrationContext<InterfaceImplementationModel> context) => 
+    static void Integrate(ModelIntegrationContext<InterfaceImplementationModel> context) =>
         context.Source.SetInterfaceImplementation(context.Model);
 
     static InterfaceImplementationModel Create(ModelCreationContext context)
@@ -32,7 +32,7 @@ readonly struct InterfaceImplementationModel
         var sourceTextBuilder = attributes.AllUnionTypeAttributes
             .Select((a, i) => (Name: a.RepresentableTypeSymbol.ToFullString(), Index: i))
             .Aggregate(
-                new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<"),
+                new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<").Append(target.ToFullString()).Append(','),
                 (b, n) => b.Append(n.Name).Append(n.Index != attributes.AllUnionTypeAttributes.Count - 1 ? "," : String.Empty))
             .AppendLine(">,")
             .Append("global::System.IEquatable<")

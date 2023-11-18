@@ -35,7 +35,7 @@
 
 	<PropertyGroup>
 		<!--'.0' required for auto source gen updater-->
-		<AssemblyName>$(MSBuildProjectName).227</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName).278</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 
@@ -58,7 +58,7 @@
 
 	<ItemGroup>
 		<PackageReference Update="NETStandard.Library" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
+		<PackageReference Include="Microsoft.CodeAnalysis" Version="4.7.0" />
 		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.8">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -45,11 +45,11 @@ readonly struct NestedTypesModel
                     sourceTextBuilder,
                     (b, a) => b.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]")
                         .Append("public readonly ")
-                        .Append(a.RepresentableTypeSymbol.ToFullString())
+                        .AppendSymbol(a.RepresentableTypeSymbol)
                         .Append(' ')
                         .Append(a.SafeAlias)
                         .AppendLine(";")
-                        .Append("public ValueTypeContainer(").Append(a.RepresentableTypeSymbol.ToFullString()).Append(" value) => ")
+                        .Append("public ValueTypeContainer(").AppendSymbol(a.RepresentableTypeSymbol).Append(" value) => ")
                         .Append(a.SafeAlias).AppendLine(" = value;"))
                 .AppendLine("}");
         }

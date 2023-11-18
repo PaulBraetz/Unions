@@ -55,7 +55,7 @@ readonly struct EqualsFunctionsModel
         void appendEqualityExpression(UnionTypeAttribute attribute)
         {
             _ = sourceTextBuilder.Append("EqualityComparer<")
-                .Append(attribute.RepresentableTypeSymbol.ToFullString())
+                .AppendSymbol(attribute.RepresentableTypeSymbol)
                 .Append(">.Default.Equals(")
                 .Append(attribute.GetInstanceVariableExpression(target))
                 .Append(',')

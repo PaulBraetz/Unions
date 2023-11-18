@@ -27,7 +27,7 @@ readonly struct MatchFunctionModel
             .Aggregate(
                 new StringBuilder("public TResult Match<TResult>("),
                 (b, t) => b.Append("global::System.Func<")
-                    .Append(t.Attribute.RepresentableTypeSymbol.ToFullString())
+                    .AppendSymbol(t.Attribute.RepresentableTypeSymbol)
                     .Append(", TResult> on")
                     .Append(t.Attribute.SafeAlias)
                     .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))

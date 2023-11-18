@@ -29,7 +29,9 @@ readonly struct ConstructorsModel
         var sourceText = attributes.AllUnionTypeAttributes
             .Aggregate(new StringBuilder(), (b, a) =>
             {
-                _ = b.Append("private ").Append(symbol.Name).Append('(').Append(a.RepresentableTypeSymbol.ToFullString()).AppendLine(" value){");
+                var accessibility = context.Parameters.GetSpecificAccessibility(a);
+
+                _ = b.Append(accessibility).Append(' ').Append(symbol.Name).Append('(').AppendSymbol(a.RepresentableTypeSymbol).AppendLine(" value){");
 
                 if(attributes.AllUnionTypeAttributes.Count > 1)
                     _ = b.Append("__tag = Tag.").Append(a.SafeAlias).AppendLine(";");

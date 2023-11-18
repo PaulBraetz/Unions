@@ -24,28 +24,26 @@ readonly struct DownCastFunctionModel
         var target = context.Parameters.TargetSymbol;
 
         var sourceTextBuilder = new StringBuilder("public TSuperset DownCast<TSuperset>()")
-            .AppendLine(" where TSuperset :");
-
-        _ = attributes
-            .Select((a, i) => (Attribute: a, Suffix: i == attributes.Count - 1 ? attributes.Count > 1 ? " => __tag switch {" : " => " : ","))
-            .Aggregate(
-            sourceTextBuilder,
-            static (b, t) => b.Append("global::RhoMicro.Unions.Abstractions.ISuperset<")
-                .Append(t.Attribute.RepresentableTypeSymbol.ToFullString())
-                .Append(", TSuperset>")
-                .AppendLine(t.Suffix));
+            .AppendLine(" where TSuperset : global::RhoMicro.Unions.Abstractions.IUnion<TSuperset,")
+            .AppendAggregateJoin(
+                ",",
+                attributes,
+                (b, a) => b.AppendSymbol(a.RepresentableTypeSymbol))
+            .Append('>');
 
 #pragma warning disable IDE0045 // Convert to conditional expression
         if(attributes.Count == 1)
         {
-            _ = sourceTextBuilder.Append(attributes[0].GetInstanceVariableExpression(target));
+            _ = sourceTextBuilder.Append("=> TSuperset.Create<").AppendSymbol(attributes[0].RepresentableTypeSymbol)
+                .Append(">(").Append(attributes[0].GetInstanceVariableExpression(target)).Append(')');
         } else
         {
             _ = attributes.Aggregate(
-                sourceTextBuilder,
+                sourceTextBuilder.Append(" => __tag switch{"),
                 (b, a) => b.Append(a.TagValueExpression)
                     .Append(" => ")
-                    .Append(a.GetInstanceVariableExpression(target))
+                    .Append("TSuperset.Create<").AppendSymbol(a.RepresentableTypeSymbol)
+                    .Append(">(").Append(a.GetInstanceVariableExpression(target)).Append(')')
                     .AppendLine(","))
                 .Append("_ => ")
                 .Append(ConstantSources.InvalidTagStateThrow)
