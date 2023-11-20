@@ -15,8 +15,8 @@ readonly struct SwitchMethodModel
     public readonly String SourceText;
     private SwitchMethodModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<SwitchMethodModel> context) =>
@@ -31,7 +31,7 @@ readonly struct SwitchMethodModel
             .Aggregate(
                 new StringBuilder("public void Switch("),
                 (b, t) => b.Append("global::System.Action<")
-                    .AppendSymbol(t.Attribute.RepresentableTypeSymbol)
+                    .AppendFull(t.Attribute)
                     .Append("> on")
                     .Append(t.Attribute.SafeAlias)
                     .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))

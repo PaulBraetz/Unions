@@ -21,14 +21,16 @@ sealed partial class SourceModelBuilder
     private String? _containingClassesHead;
     private String? _containingClassesTail;
 
-    public void SetTarget(ITypeSymbol symbol)
+    public void SetTarget(INamedTypeSymbol symbol)
     {
         _isInitialized = true;
 
         _containingClassesHead = symbol.GetContainingClassHead();
         _containingClassesTail = symbol.GetContainingClassTail();
 
-        _targetName = symbol.Name;
+        _targetName = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat
+            .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
+
         _targetStructOrClass = symbol.IsValueType ?
             "struct" :
             "class";
@@ -184,13 +186,15 @@ sealed partial class SourceModelBuilder
             .AppendLine("#region Fields")
             .Append(_fields)
             .AppendLine("#endregion")
+            .AppendLine("#region Factories")
+            .AppendLine(_factoryFunctions)
+            .AppendLine("#endregion")
             .AppendLine("#region Methods")
             .AppendLine(_downCastFunction)
             .AppendLine(_switchMethod)
             .AppendLine(_matchFunction)
             .AppendLine(_isAsFunctions)
             .AppendLine(_getRepresentedTypeFunction)
-            .AppendLine(_factoryFunctions)
             .AppendLine("#endregion")
             .AppendLine("#region Overrides & Equality")
             .Append(_toStringFunction)
@@ -212,7 +216,7 @@ sealed partial class SourceModelBuilder
                     .GetText()
                     .ToString();
 
-        var hint = $"{_targetName ?? Guid.NewGuid().ToString()}.g.cs";
+        var hint = $"{_targetName?.Replace('<', '_').Replace('>', '_') ?? Guid.NewGuid().ToString()}.g.cs";
 
         var result = new BuiltModel(formattedSource, hint);
 

@@ -7,13 +7,22 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 
-internal static class Extensions
+internal static partial class Extensions
 {
-    public static String GetSpecificAccessibility(this ModelFactoryParameters parameters, UnionTypeAttribute attribute)
+    public static Boolean ShouldReport(this Diagnostic diagnostic, DiagnosticsLevelSettings settings) =>
+        diagnostic.Severity switch
+        {
+            DiagnosticSeverity.Error => settings.HasFlag(DiagnosticsLevelSettings.Error),
+            DiagnosticSeverity.Warning => settings.HasFlag(DiagnosticsLevelSettings.Warning),
+            DiagnosticSeverity.Info => settings.HasFlag(DiagnosticsLevelSettings.Info),
+            _ => false
+        };
+    public static String GetSpecificAccessibility(this TargetDataModel parameters, UnionTypeAttribute attribute)
     {
         var accessibility = parameters.Attributes.Settings.ConstructorAccessibility;
 
@@ -35,53 +44,53 @@ internal static class Extensions
         symbol.GetAttributes().OfUnionTypeAttribute().Any();
     public static String ToDocCompatString(this ITypeSymbol symbol) =>
         symbol.ToFullString().Replace("<", "&lt;").Replace(">", "&gt;");
-    public static String ToFullString(this ISymbol symbol) =>
-        symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
-    .WithMiscellaneousOptions(
-    //    /*
-    //         get rid of special types
-    //
-    //         10110
-    //    NAND 00100
-    //      => 10010
+    public static String ToOpenString(this ISymbol symbol) =>
+        symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat
+            .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
+    public static String ToFullString(this ISymbol symbol)
+    {
+        var format = SymbolDisplayFormat.FullyQualifiedFormat
+                    .WithMiscellaneousOptions(
+                    /*
+                        get rid of special types
 
-    //         10110
-    //      &! 00100
-    //      => 10010
+                             10110
+                        NAND 00100
+                          => 10010
 
-    //         00100
-    //       ^ 11111
-    //      => 11011
+                             10110
+                          &! 00100
+                          => 10010
 
-    //         10110
-    //       & 11011
-    //      => 10010
-    //*/
-    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
-    (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue)));
-    public static StringBuilder AppendSymbol(this StringBuilder builder, ITypeSymbol symbol) =>
+                             00100
+                           ^ 11111
+                          => 11011
+
+                             10110
+                           & 11011
+                          => 10010
+                    */
+                    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
+                    (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue))
+                    .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters);
+
+        return symbol.ToDisplayString(format);
+    }
+
+    public static StringBuilder AppendOpen(this StringBuilder builder, UnionTypeAttribute attribute) =>
+        builder.Append(attribute.OpenTypeName);
+    public static StringBuilder AppendOpen(this StringBuilder builder, INamedTypeSymbol symbol) =>
+        builder.Append(symbol.ToOpenString());
+    public static StringBuilder AppendCommentRef(this StringBuilder builder, UnionTypeAttribute attribute) =>
+        builder.Append(attribute.CommentRef);
+    public static StringBuilder AppendCommentRef(this StringBuilder builder, TargetDataModel data) =>
+        builder.AppendCommentRef(data.TargetSymbol);
+    public static StringBuilder AppendCommentRef(this StringBuilder builder, INamedTypeSymbol symbol) =>
+        builder.Append("<see cref=\"").Append(symbol.ToFullString().Replace('<', '{').Replace('>', '}')).Append("\"/>");
+    public static StringBuilder AppendFull(this StringBuilder builder, INamedTypeSymbol symbol) =>
         builder.Append(symbol.ToFullString());
-
-    public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
-        this IncrementalValuesProvider<SourceCarry<TSource>> provider,
-        Func<TSource, DiagnosticsModelBuilder, SourceModelBuilder, CancellationToken, TResult> project) =>
-        provider.Select((c, t) => c.Project((s, d, b) => project.Invoke(s, d, b, t)));
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> SelectCarry<TModel>(
-        this IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider,
-        Func<ModelCreationContext, TModel> modelFactory,
-        Action<ModelIntegrationContext<TModel>> modelIntegration) =>
-        provider.SelectCarry((c, d, s, t) =>
-        {
-            t.ThrowIfCancellationRequested();
-
-            var invocationContext = new ModelCreationContext(c, t);
-            var model = modelFactory.Invoke(invocationContext);
-
-            var integrationContext = new ModelIntegrationContext<TModel>(d, s, t, model);
-            modelIntegration.Invoke(integrationContext);
-
-            return c;
-        });
+    public static StringBuilder AppendFull(this StringBuilder builder, UnionTypeAttribute attribute) =>
+        builder.Append(attribute.FullTypeName);
 
     public static String GetContainingClassHead(this ITypeSymbol nestedType)
     {
@@ -93,7 +102,7 @@ internal static class Extensions
                 TypeKind.Struct => "struct ",
                 TypeKind.Interface => "interface ",
                 _ => null
-            } + s.Name)
+            } + s.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat.WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters)))
             .Where(k => k != null)
             .Aggregate(
                 resultBuilder,
@@ -219,4 +228,26 @@ internal static class Extensions
             }
         }
     }
+    private static readonly HashSet<String> _attributeNames =
+    [
+        nameof(UnionTypeAttribute),
+        nameof(UnionTypeAttribute).Substring(0, nameof(UnionTypeAttribute).Length - nameof(Attribute).Length),
+        nameof(UnionTypeSettingsAttribute),
+        nameof(UnionTypeSettingsAttribute).Substring(0, nameof(UnionTypeSettingsAttribute).Length - nameof(Attribute).Length),
+        nameof(RelationAttribute),
+        nameof(RelationAttribute).Substring(0, nameof(RelationAttribute).Length - nameof(Attribute).Length)
+    ];
+
+    public static Boolean IsUnionDeclaration(SyntaxNode node, CancellationToken _)
+    {
+        var result = node is TypeDeclarationSyntax typeDeclaration &&
+            typeDeclaration.AttributeLists
+            .SelectMany(a => a.Attributes)
+            .Select(a => a.Name.ToString())
+            .Any(_attributeNames.Contains);
+
+        return result;
+    }
+    public static Boolean IsPartial(this TypeDeclarationSyntax declarationSyntax) =>
+        declarationSyntax.Modifiers.Any(SyntaxKind.PartialKeyword);
 }

@@ -14,8 +14,8 @@ readonly struct EqualsFunctionsModel
     private EqualsFunctionsModel(String sourceText) => SourceText = sourceText;
     public readonly String SourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<EqualsFunctionsModel> context) =>
@@ -27,13 +27,18 @@ readonly struct EqualsFunctionsModel
         var attributes = context.Parameters.Attributes;
 
         var sourceTextBuilder = new StringBuilder("public override Boolean Equals(Object obj) => obj is ")
-            .Append(target.Name).AppendLine(" union && Equals(union);")
+            .AppendOpen(target).AppendLine(" union && Equals(union);")
             .Append("public Boolean Equals(")
-            .Append(target.Name).AppendLine(" obj) =>");
+            .AppendOpen(target).AppendLine(" obj) =>");
+
+        if(target.IsReferenceType)
+        {
+            _ = sourceTextBuilder.Append(" obj != null && ");
+        }
 
         if(attributes.AllUnionTypeAttributes.Count > 1)
         {
-            _ = sourceTextBuilder.AppendLine("__tag switch{");
+            _ = sourceTextBuilder.AppendLine(" __tag == obj.__tag && __tag switch{");
             foreach(var attribute in attributes.AllUnionTypeAttributes)
             {
                 _ = sourceTextBuilder.Append(attribute.TagValueExpression).Append(" => ");
@@ -55,7 +60,7 @@ readonly struct EqualsFunctionsModel
         void appendEqualityExpression(UnionTypeAttribute attribute)
         {
             _ = sourceTextBuilder.Append("EqualityComparer<")
-                .AppendSymbol(attribute.RepresentableTypeSymbol)
+                .AppendFull(attribute)
                 .Append(">.Default.Equals(")
                 .Append(attribute.GetInstanceVariableExpression(target))
                 .Append(',')

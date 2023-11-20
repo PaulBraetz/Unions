@@ -1,10 +1,11 @@
-﻿
+﻿namespace RhoMicro.Unions.Generator;
+
 using Microsoft.CodeAnalysis;
 
 using RhoMicro.Unions;
-using RhoMicro.Unions.Generator;
 
 using System.Collections.Generic;
+using System.Linq;
 
 sealed class OperatorOmissionModel
 {
@@ -29,15 +30,17 @@ sealed class OperatorOmissionModel
         var supertypes = new HashSet<UnionTypeAttribute>();
         var allOmissions = new HashSet<UnionTypeAttribute>();
 
-        foreach(var attribute in attributes.AllUnionTypeAttributes)
+        var concreteAttributes = attributes.AllUnionTypeAttributes.Where(a => !a.RepresentableTypeIsGenericParameter);
+
+        foreach(var attribute in concreteAttributes)
         {
-            if(target.InheritsFrom(attribute.RepresentableTypeSymbol))
+            if(target.InheritsFrom(attribute.RepresentableTypeSymbol!))
             {
                 _ = allOmissions.Add(attribute);
                 _ = supertypes.Add(attribute);
             }
 
-            if(attribute.RepresentableTypeSymbol.TypeKind == TypeKind.Interface)
+            if(attribute.RepresentableTypeSymbol!.TypeKind == TypeKind.Interface)
             {
                 _ = allOmissions.Add(attribute);
                 _ = interfaces.Add(attribute);

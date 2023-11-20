@@ -14,14 +14,14 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
     public readonly String SourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<ToStringFunctionModel> context) =>
         context.Source.SetToStringFunction(context.Model);
 
-    static ToStringFunctionModel CreateDetailed(ModelCreationContext context)
+    private static ToStringFunctionModel CreateDetailed(ModelCreationContext context)
     {
         var target = context.Parameters.TargetSymbol;
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;

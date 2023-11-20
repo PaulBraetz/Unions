@@ -35,7 +35,7 @@
 
 	<PropertyGroup>
 		<!--'.0' required for auto source gen updater-->
-		<AssemblyName>$(MSBuildProjectName).278</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName).322</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 
@@ -51,33 +51,34 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Include="..\RhoMicro.Unions\RelationAttribute.cs" Link="Attributes\RelationAttribute.cs" />
-		<Compile Include="..\RhoMicro.Unions\UnionTypeAttribute.cs" Link="Attributes\UnionTypeAttribute.cs" />
-		<Compile Include="..\RhoMicro.Unions\UnionTypeSettingsAttribute.cs" Link="Attributes\UnionTypeSettingsAttribute.cs" />
+	  <Compile Include="..\RhoMicro.Unions\RelationAttribute.cs" Link="Attributes\RelationAttribute.cs" />
+	  <Compile Include="..\RhoMicro.Unions\UnionTypeAttribute.cs" Link="Attributes\UnionTypeAttribute.cs" />
+	  <Compile Include="..\RhoMicro.Unions\UnionTypeSettingsAttribute.cs" Link="Attributes\UnionTypeSettingsAttribute.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Update="NETStandard.Library" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.CodeAnalysis" Version="4.7.0" />
-		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.8">
+		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Resources\Diagnostics.en.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>Diagnostics.en.resx</DependentUpon>
-		</Compile>
+	  <Compile Update="Resources\Diagnostics.en.Designer.cs">
+	    <DependentUpon>Diagnostics.en.resx</DependentUpon>
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Update="Resources\Diagnostics.en.resx">
-			<Generator>ResXFileCodeGenerator</Generator>
-			<LastGenOutput>Diagnostics.en.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
+	  <EmbeddedResource Update="Resources\Diagnostics.en.resx">
+	    <SubType>Designer</SubType>
+	    <LastGenOutput>Diagnostics.en.Designer.cs</LastGenOutput>
+	    <Generator>ResXFileCodeGenerator</Generator>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<!--Required for source gen auto updater-->

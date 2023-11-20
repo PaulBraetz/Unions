@@ -183,6 +183,12 @@
   <data name="RepresentableTypeIsSupertype_Title" xml:space="preserve">
     <value>Conversion Operators Omitted</value>
   </data>
+  <data name="ReservedGenericParameterName_Message" xml:space="preserve">
+    <value>The targeted union type contains a generic parameter named `{0}` which is reserved for generated code.</value>
+  </data>
+  <data name="ReservedGenericParameterName_Title" xml:space="preserve">
+    <value>Reserved Generic Parameter Name</value>
+  </data>
   <data name="StaticTarget_Message" xml:space="preserve">
     <value>Union types may not be declared using the 'static' modifier.</value>
   </data>

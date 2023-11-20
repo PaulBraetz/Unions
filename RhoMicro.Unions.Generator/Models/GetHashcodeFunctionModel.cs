@@ -12,8 +12,8 @@ readonly struct GetHashcodeFunctionModel
     private GetHashcodeFunctionModel(String sourceText) => SourceText = sourceText;
     public readonly String SourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<GetHashcodeFunctionModel> context) =>

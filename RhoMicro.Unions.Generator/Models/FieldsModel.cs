@@ -14,8 +14,8 @@ readonly struct FieldsModel
     public readonly String SourceText;
     private FieldsModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<FieldsModel> context) =>

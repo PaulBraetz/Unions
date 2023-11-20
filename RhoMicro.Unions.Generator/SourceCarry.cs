@@ -31,20 +31,18 @@ readonly struct SourceCarry<T> : IEquatable<SourceCarry<T>>
         _context = context;
     }
 
-    public static SourceCarry<ModelFactoryParameters> Create(GeneratorSyntaxContext generatorContext, CancellationToken token)
+    public static SourceCarry<TargetDataModel> Create(GeneratorSyntaxContext generatorContext, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
 
-        var diagnostics = new DiagnosticsModelBuilder();
-        diagnostics.DiagnoseInvalidTargetNode(generatorContext.Node, token);
-
         var target = generatorContext.Node as TypeDeclarationSyntax ??
             throw new ArgumentException("Invalid target node detected.");
-
-        var context = ModelFactoryParameters.Create(target, generatorContext.SemanticModel);
+        var context = TargetDataModel.Create(target, generatorContext.SemanticModel);
+        
         var source = new SourceModelBuilder();
+        var diagnostics = new DiagnosticsModelBuilder();
 
-        return new SourceCarry<ModelFactoryParameters>(context, diagnostics, source);
+        return new SourceCarry<TargetDataModel>(context, diagnostics, source);
     }
     public SourceCarry<TResult> Project<TResult>(Func<T, DiagnosticsModelBuilder, SourceModelBuilder, TResult> project)
     {
@@ -71,10 +69,7 @@ readonly struct SourceCarry<T> : IEquatable<SourceCarry<T>>
     }
     public void AddToContext(SourceProductionContext context)
     {
-        var diagnostics = Diagnostics.Build();
-        diagnostics.AddToContext(context);
-
-        if(!diagnostics.IsError)
+        if(!Diagnostics.IsError)
         {
             Source.Build().AddToContext(context);
         }

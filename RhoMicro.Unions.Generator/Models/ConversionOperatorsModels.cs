@@ -16,8 +16,8 @@ readonly struct ConversionOperatorsModel
 
     private ConversionOperatorsModel(IEnumerable<ConversionOperatorModel> models) => _models = models;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<ConversionOperatorsModel> context) =>
@@ -43,21 +43,21 @@ readonly struct ConversionOperatorModel
 
     private ConversionOperatorModel(String sourceText) => SourceText = sourceText;
 
-    public static ConversionOperatorModel Create(UnionTypeAttribute attribute, ModelFactoryParameters parameters)
+    public static ConversionOperatorModel Create(UnionTypeAttribute attribute, TargetDataModel data)
     {
-        var target = parameters.TargetSymbol;
-        var allAttributes = parameters.Attributes.AllUnionTypeAttributes;
+        var target = data.TargetSymbol;
+        var allAttributes = data.Attributes.AllUnionTypeAttributes;
 
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// <summary>")
-            .Append("/// Converts an instance of <see cref=\"").AppendSymbol(attribute.RepresentableTypeSymbol).Append("\"/> to the union type <see cref=\"").AppendSymbol(target).AppendLine("\"/>.")
+            .Append("/// Converts an instance of ").AppendCommentRef(attribute).Append(" to the union type ").AppendCommentRef(data).AppendLine("\"/>.")
             .AppendLine("/// </summary>")
             .AppendLine("/// <param name=\"value\">The value to convert.</param>")
             .AppendLine("/// <returns>The converted value.</returns>")
             .Append("public static implicit operator ")
-            .AppendSymbol(target)
+            .AppendOpen(target)
             .Append('(')
-            .AppendSymbol(attribute.RepresentableTypeSymbol)
+            .AppendFull(attribute)
             .AppendLine(" value) => new(value);");
 
         var generateSolitaryExplicit = allAttributes.Count > 1 || !attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary);
@@ -65,9 +65,9 @@ readonly struct ConversionOperatorModel
         {
             _ = sourceTextBuilder
                 .Append("public static explicit operator ")
-                .AppendSymbol(attribute.RepresentableTypeSymbol)
+                .AppendFull(attribute)
                 .Append('(')
-                .AppendSymbol(target)
+                .AppendOpen(target)
                 .Append(" union) => ");
 
             if(allAttributes.Count > 1)
@@ -91,9 +91,9 @@ readonly struct ConversionOperatorModel
         } else
         {
             _ = sourceTextBuilder.Append("public static implicit operator ")
-                .AppendSymbol(attribute.RepresentableTypeSymbol)
+                .AppendFull(attribute)
                 .Append('(')
-                .Append(target.Name)
+                .AppendOpen(target)
                 .Append(" union) => ")
                 .Append(attribute.GetInstanceVariableExpression(target, "union"))
                 .AppendLine(";");

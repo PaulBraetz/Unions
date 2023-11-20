@@ -16,8 +16,8 @@ readonly struct InterfaceImplementationModel
 
     public readonly String SourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<InterfaceImplementationModel> context) =>
@@ -32,11 +32,11 @@ readonly struct InterfaceImplementationModel
         var sourceTextBuilder = attributes.AllUnionTypeAttributes
             .Select((a, i) => (Name: a.RepresentableTypeSymbol.ToFullString(), Index: i))
             .Aggregate(
-                new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<").Append(target.ToFullString()).Append(','),
+                new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<").AppendOpen(target).Append(','),
                 (b, n) => b.Append(n.Name).Append(n.Index != attributes.AllUnionTypeAttributes.Count - 1 ? "," : String.Empty))
             .AppendLine(">,")
             .Append("global::System.IEquatable<")
-            .Append(target.Name)
+            .AppendOpen(target)
             .Append('>');
 
         if(!(attributes.AllUnionTypeAttributes.Count == 1 && attributes.AllUnionTypeAttributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
@@ -51,7 +51,7 @@ readonly struct InterfaceImplementationModel
                         .Append(" global::RhoMicro.Unions.Abstractions.ISuperset<")
                         .Append(n)
                         .Append(',')
-                        .Append(target.Name)
+                        .AppendOpen(target)
                         .Append('>'));
         }
 

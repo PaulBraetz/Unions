@@ -9,8 +9,8 @@ readonly struct FactoryFunctionsModel
     public readonly String SourceText;
     private FactoryFunctionsModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<FactoryFunctionsModel> context) =>
@@ -27,24 +27,41 @@ readonly struct FactoryFunctionsModel
                 (b, a) => b.AppendLine(
                     $$"""
                     /// </inheritdoc>
-                    public static {{target.ToFullString()}} Create({{a.RepresentableTypeSymbol.ToFullString()}} value) => new(value);
+                    public static {{target.ToOpenString()}} Create({{a.RepresentableTypeSymbol.ToFullString()}} value) => new(value);
                     """))
             .AppendLine("/// </inheritdoc>")
-            .Append("public static Boolean TryCreate<T>(T value, out ").Append(target.Name).AppendLine(" instance){switch(typeof(T)){")
+            .Append("public static Boolean TryCreate<")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(">(")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(" value, out ").AppendOpen(target).AppendLine(" instance){switch(typeof(")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(")){")
             .AppendAggregate(
                 attributes,
                 (b, a) => b.Append("case Type ").Append(a.SafeAlias).Append("Type when ")
-                .Append(a.SafeAlias).Append("Type == typeof(").AppendSymbol(a.RepresentableTypeSymbol).Append("):")
-                .AppendLine("instance = new(Util.UnsafeConvert<T,").AppendSymbol(a.RepresentableTypeSymbol).Append(">(value));return true;"))
+                .Append(a.SafeAlias).Append("Type == typeof(").AppendFull(a).Append("):")
+                .AppendLine("instance = new(Util.UnsafeConvert<")
+                .Append(ConstantSources.GenericFactoryIsAsType)
+                .Append(',').AppendFull(a)
+                .Append(">(value));return true;"))
             .AppendLine("default: instance = default; return false;}}")
             .AppendLine("/// </inheritdoc>")
-            .Append("public static ").Append(target.Name).AppendLine(" Create<T>(T value){switch(typeof(T)){")
+            .Append("public static ").AppendOpen(target).AppendLine(" Create<")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(">(")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(" value){switch(typeof(")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(")){")
             .AppendAggregate(
                 attributes,
                 (b, a) => b.Append("case Type ").Append(a.SafeAlias).Append("Type when ")
-                .Append(a.SafeAlias).Append("Type == typeof(").AppendSymbol(a.RepresentableTypeSymbol).Append("):")
-                .AppendLine("return new(Util.UnsafeConvert<T,").AppendSymbol(a.RepresentableTypeSymbol).Append(">(value));"))
-            .Append("default: ").Append(ConstantSources.InvalidCreationThrow($"nameof({target.Name})", "value"))
+                .Append(a.SafeAlias).Append("Type == typeof(").AppendFull(a).Append("):")
+                .AppendLine("return new(Util.UnsafeConvert<")
+            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(",").AppendFull(a).Append(">(value));"))
+            .Append("default: ").Append(ConstantSources.InvalidCreationThrow($"\"{target.ToOpenString()}\"", "value"))
             .AppendLine(";}}")
             .ToString();
 

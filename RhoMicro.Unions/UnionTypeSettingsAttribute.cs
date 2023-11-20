@@ -67,6 +67,29 @@ public enum ConstructorAccessibilitySetting
     /// </summary>
     Public
 }
+/// <summary>
+/// Defines settings for the kind of diagnostics to report.
+/// </summary>
+[Flags]
+public enum DiagnosticsLevelSettings
+{
+    /// <summary>
+    /// Instructs the analyzer to report info diagnostics.
+    /// </summary>
+    Info = 0x01,
+    /// <summary>
+    /// Instructs the analyzer to report warning diagnostics.
+    /// </summary>
+    Warning = 0x02,
+    /// <summary>
+    /// Instructs the analyzer to report error diagnostics.
+    /// </summary>
+    Error = 0x04,
+    /// <summary>
+    /// Instructs the analyzer to report all diagnostics.
+    /// </summary>
+    All = Info + Warning + Error
+}
 
 /// <summary>
 /// Supplies the generator with additional settings on how to generate a targeted union type.
@@ -84,9 +107,9 @@ public sealed partial class UnionTypeSettingsAttribute : Attribute
     /// </summary>
     public LayoutSetting Layout { get; set; }
     /// <summary>
-    /// Gets or sets a value that determines whether to emit diagnostics for the targeted union type.
+    /// Gets or sets the level of diagnostics to be reported by the analyzer.
     /// </summary>
-    public Boolean EmitDiagnostics { get; set; }
+    public DiagnosticsLevelSettings DiagnosticsLevel { get; set; } = DiagnosticsLevelSettings.All;
     /// <summary>
     /// Gets or sets a value indicating the desired accessibility of generated constructors.
     /// </summary>

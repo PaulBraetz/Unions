@@ -11,8 +11,8 @@ readonly struct LayoutModel
     public readonly String SourceText;
     private LayoutModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<LayoutModel> context) =>

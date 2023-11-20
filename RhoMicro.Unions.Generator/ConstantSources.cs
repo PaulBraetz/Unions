@@ -1,9 +1,16 @@
 ﻿namespace RhoMicro.Unions.Generator;
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 
 internal static class ConstantSources
 {
+    public static readonly HashSet<String> ReservedGenericTypeNames = [GenericFactoryIsAsType, GenericDownCastType, GenericTResultType];
+    public const String GenericFactoryIsAsType = "TValue";
+    public const String GenericDownCastType = "TSuperset";
+    public const String GenericTResultType = "TResult";
+
     public const String Util =
     """
     file static class Util

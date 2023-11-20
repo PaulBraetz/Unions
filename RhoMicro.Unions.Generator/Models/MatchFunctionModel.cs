@@ -11,8 +11,8 @@ readonly struct MatchFunctionModel
     public readonly String SourceText;
     private MatchFunctionModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<MatchFunctionModel> context) =>
@@ -25,10 +25,14 @@ readonly struct MatchFunctionModel
         var sourceTextBuilder = attributes
             .Select((a, i) => (Attribute: a, Index: i))
             .Aggregate(
-                new StringBuilder("public TResult Match<TResult>("),
+                new StringBuilder("public TResult Match<")
+                    .Append(ConstantSources.GenericTResultType)
+                    .Append(">("),
                 (b, t) => b.Append("global::System.Func<")
-                    .AppendSymbol(t.Attribute.RepresentableTypeSymbol)
-                    .Append(", TResult> on")
+                    .AppendFull(t.Attribute)
+                    .Append(", ")
+                    .Append(ConstantSources.GenericTResultType)
+                    .Append("> on")
                     .Append(t.Attribute.SafeAlias)
                     .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))
             .AppendLine(") =>");

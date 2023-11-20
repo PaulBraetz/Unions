@@ -14,8 +14,8 @@ readonly struct NestedTypesModel
     public readonly String SourceText;
     private NestedTypesModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<NestedTypesModel> context) =>
@@ -45,11 +45,11 @@ readonly struct NestedTypesModel
                     sourceTextBuilder,
                     (b, a) => b.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]")
                         .Append("public readonly ")
-                        .AppendSymbol(a.RepresentableTypeSymbol)
+                        .AppendFull(a)
                         .Append(' ')
                         .Append(a.SafeAlias)
                         .AppendLine(";")
-                        .Append("public ValueTypeContainer(").AppendSymbol(a.RepresentableTypeSymbol).Append(" value) => ")
+                        .Append("public ValueTypeContainer(").AppendFull(a).Append(" value) => ")
                         .Append(a.SafeAlias).AppendLine(" = value;"))
                 .AppendLine("}");
         }

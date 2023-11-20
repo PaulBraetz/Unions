@@ -15,8 +15,8 @@ readonly struct ConstructorsModel
     public readonly String SourceText;
     private ConstructorsModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<ConstructorsModel> context) =>
@@ -31,10 +31,12 @@ readonly struct ConstructorsModel
             {
                 var accessibility = context.Parameters.GetSpecificAccessibility(a);
 
-                _ = b.Append(accessibility).Append(' ').Append(symbol.Name).Append('(').AppendSymbol(a.RepresentableTypeSymbol).AppendLine(" value){");
+                _ = b.Append(accessibility).Append(' ').Append(symbol.Name).Append('(').AppendFull(a).AppendLine(" value){");
 
                 if(attributes.AllUnionTypeAttributes.Count > 1)
                     _ = b.Append("__tag = Tag.").Append(a.SafeAlias).AppendLine(";");
+
+                //TODO: how to store etc. generic types
 
                 var result = (a.RepresentableTypeSymbol.IsValueType ?
                     b.AppendLine("__valueTypeContainer = new(value);") :

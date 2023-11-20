@@ -13,6 +13,10 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<WarningsAsErrors>CS8600</WarningsAsErrors>
+	</PropertyGroup>
+	
+	<PropertyGroup>
 		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<AssemblyName Condition="'$(SolutionName)'!=''">$(SolutionName).$(MSBuildProjectName)</AssemblyName>
 

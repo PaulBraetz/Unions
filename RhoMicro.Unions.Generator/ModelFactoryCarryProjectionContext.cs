@@ -4,10 +4,10 @@ using System.Threading;
 
 readonly struct ModelCreationContext
 {
-    public readonly ModelFactoryParameters Parameters;
+    public readonly TargetDataModel Parameters;
     public readonly CancellationToken CancellationToken;
 
-    public ModelCreationContext(ModelFactoryParameters parameters, CancellationToken cancellationToken)
+    public ModelCreationContext(TargetDataModel parameters, CancellationToken cancellationToken)
     {
         Parameters = parameters;
         CancellationToken = cancellationToken;

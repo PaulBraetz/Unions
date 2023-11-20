@@ -24,9 +24,15 @@ internal static partial class Diagnostics
         AliasCollision = 11,
         UnionTypeSettingsOnNonUnionType = 12,
         RepresentableTypeIsSupertype = 13,
-        RepresentableTypeIsInterface = 14
+        RepresentableTypeIsInterface = 14,
+        ReservedGenericParameterName = 15
     }
-
+    public static Diagnostic ReservedGenericParameterName(Location location, String name) =>
+        Create(
+            Id.ReservedGenericParameterName,
+            location,
+            DiagnosticSeverity.Error,
+            name);
     public static Diagnostic RepresentableTypeIsInterface(Location location, String representableTypeName) =>
         Create(
             Id.RepresentableTypeIsInterface,

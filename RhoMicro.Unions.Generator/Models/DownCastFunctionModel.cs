@@ -12,8 +12,8 @@ readonly struct DownCastFunctionModel
     public readonly String SourceText;
     private DownCastFunctionModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     private static void Integrate(ModelIntegrationContext<DownCastFunctionModel> context) =>
@@ -23,18 +23,29 @@ readonly struct DownCastFunctionModel
         var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
         var target = context.Parameters.TargetSymbol;
 
-        var sourceTextBuilder = new StringBuilder("public TSuperset DownCast<TSuperset>()")
-            .AppendLine(" where TSuperset : global::RhoMicro.Unions.Abstractions.IUnion<TSuperset,")
+        var sourceTextBuilder = new StringBuilder("public")
+            .Append(' ')
+            .Append(ConstantSources.GenericTResultType)
+            .Append(" DownCast<")
+            .Append(ConstantSources.GenericTResultType)
+            .Append(">()")
+            .AppendLine(" where ")
+            .Append(ConstantSources.GenericTResultType)
+            .Append(" : global::RhoMicro.Unions.Abstractions.IUnion<")
+            .Append(ConstantSources.GenericTResultType)
+            .Append(',')
             .AppendAggregateJoin(
                 ",",
                 attributes,
-                (b, a) => b.AppendSymbol(a.RepresentableTypeSymbol))
+                (b, a) => b.AppendFull(a))
             .Append('>');
 
 #pragma warning disable IDE0045 // Convert to conditional expression
         if(attributes.Count == 1)
         {
-            _ = sourceTextBuilder.Append("=> TSuperset.Create<").AppendSymbol(attributes[0].RepresentableTypeSymbol)
+            _ = sourceTextBuilder.Append(" => ")
+                .Append(ConstantSources.GenericTResultType)
+                .Append(".Create<").AppendFull(attributes[0])
                 .Append(">(").Append(attributes[0].GetInstanceVariableExpression(target)).Append(')');
         } else
         {
@@ -42,12 +53,13 @@ readonly struct DownCastFunctionModel
                 sourceTextBuilder.Append(" => __tag switch{"),
                 (b, a) => b.Append(a.TagValueExpression)
                     .Append(" => ")
-                    .Append("TSuperset.Create<").AppendSymbol(a.RepresentableTypeSymbol)
+                    .Append(ConstantSources.GenericTResultType)
+                    .Append(".Create<").AppendFull(a)
                     .Append(">(").Append(a.GetInstanceVariableExpression(target)).Append(')')
                     .AppendLine(","))
                 .Append("_ => ")
                 .Append(ConstantSources.InvalidTagStateThrow)
-                .Append("}");
+                .Append('}');
         }
 #pragma warning restore IDE0045 // Convert to conditional expression
 

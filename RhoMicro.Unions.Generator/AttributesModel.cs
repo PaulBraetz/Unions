@@ -13,6 +13,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
 {
     public readonly IReadOnlyList<UnionTypeAttribute> ReferenceTypeAttributes;
     public readonly IReadOnlyList<UnionTypeAttribute> ValueTypeAttributes;
+    public readonly IReadOnlyList<UnionTypeAttribute> GenericTypeAttributes;
     public readonly IReadOnlyList<UnionTypeAttribute> AllUnionTypeAttributes;
 
     public readonly IReadOnlyList<RelationAttribute> AllRelationAttributes;
@@ -22,6 +23,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
     private AttributesModel(
         IReadOnlyList<UnionTypeAttribute> referenceTypeAttributes,
         IReadOnlyList<UnionTypeAttribute> valueTypeAttributes,
+        IReadOnlyList<UnionTypeAttribute> genericTypeAttributes,
         IReadOnlyList<UnionTypeAttribute> allUnionTypeAttributes,
         IReadOnlyList<RelationAttribute> allRelationAttributes,
         UnionTypeSettingsAttribute settings)
@@ -31,6 +33,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
         AllUnionTypeAttributes = allUnionTypeAttributes;
         AllRelationAttributes = allRelationAttributes;
         Settings = settings;
+        GenericTypeAttributes = genericTypeAttributes;
     }
 
     public static AttributesModel Create(ITypeSymbol target)
@@ -42,16 +45,31 @@ sealed class AttributesModel : IEquatable<AttributesModel>
         //DO NOT CHANGE THIS ALGO, compatibility depends on deterministic order of types
         var orderedUnionTypeAttributes = attributes
             .OfUnionTypeAttribute()
-            .OrderBy(a => a.RepresentableTypeSymbol.IsValueType)
-            .ThenBy(a => a.RepresentableTypeSymbol.ToFullString());
+            .GroupBy(a => a.RepresentableTypeIsGenericParameter)
+            .OrderBy(g => g.Key) //generic params come last
+            .Select(g =>
+                g.Key ?
+                g.OrderBy(a => a.GenericRepresentableTypeName) :
+                g.OrderBy(a => a.RepresentableTypeSymbol!.IsValueType) //reference types come first, bang here bc !RepresentableTypeIsGenericParameter
+                 .ThenBy(a => a.RepresentableTypeSymbol!.ToFullString()))
+            .SelectMany(g => g)
+            .ToArray();
+
+        // reference types
+        // value types
+        // generic params
 
         var allUnionTypeAttributes = new List<UnionTypeAttribute>();
         var referenceTypeAttributes = new List<UnionTypeAttribute>();
+        var genericTypeAttributes = new List<UnionTypeAttribute>();
         var valueTypeAttributes = new List<UnionTypeAttribute>();
 
         foreach(var attribute in orderedUnionTypeAttributes)
         {
-            if(attribute.RepresentableTypeSymbol.IsValueType)
+            if(attribute.RepresentableTypeIsGenericParameter)
+            {
+                genericTypeAttributes.Add(attribute);
+            } else if(attribute.RepresentableTypeSymbol!.IsValueType)
             {
                 valueTypeAttributes.Add(attribute);
             } else if(attribute.RepresentableTypeSymbol.IsReferenceType)
@@ -69,6 +87,7 @@ sealed class AttributesModel : IEquatable<AttributesModel>
         var result = new AttributesModel(
             referenceTypeAttributes,
             valueTypeAttributes,
+            genericTypeAttributes,
             allUnionTypeAttributes,
             allRelationAttributes,
             settings);

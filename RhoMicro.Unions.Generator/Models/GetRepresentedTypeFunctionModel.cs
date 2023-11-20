@@ -12,8 +12,8 @@ readonly struct GetRepresentedTypeFunctionModel
     public readonly String SourceText;
     private GetRepresentedTypeFunctionModel(String sourceText) => SourceText = sourceText;
 
-    public static IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>>
-        Project(IncrementalValuesProvider<SourceCarry<ModelFactoryParameters>> provider)
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>>
+        Project(IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider)
         => provider.SelectCarry(Create, Integrate);
 
     static void Integrate(ModelIntegrationContext<GetRepresentedTypeFunctionModel> context) =>
@@ -29,7 +29,7 @@ readonly struct GetRepresentedTypeFunctionModel
         if(attributes.Count == 1)
         {
             _ = sourceTextBuilder.Append("typeof(")
-                .AppendSymbol(attributes[0].RepresentableTypeSymbol)
+                .AppendFull(attributes[0])
                 .AppendLine(");");
         } else
         {
@@ -37,7 +37,7 @@ readonly struct GetRepresentedTypeFunctionModel
                 .AppendAggregate(
                     attributes,
                     (b, a) => b.Append(a.TagValueExpression).Append(" => typeof(")
-                        .AppendSymbol(a.RepresentableTypeSymbol).AppendLine("),"))
+                        .AppendFull(a).AppendLine("),"))
                 .Append("_ => ").AppendLine(ConstantSources.InvalidTagStateThrow)
                 .AppendLine("};");
         }
