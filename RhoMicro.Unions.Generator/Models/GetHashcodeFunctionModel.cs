@@ -21,39 +21,28 @@ readonly struct GetHashcodeFunctionModel
 
     private static GetHashcodeFunctionModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes;
-        var target = context.Parameters.TargetSymbol;
+        var annotations = context.TargetData.Annotations;
+        var target = context.TargetData.TargetSymbol;
 
         var sourceTextBuilder = new StringBuilder("public override Int32 GetHashCode() =>");
 
-        if(attributes.ReferenceTypeAttributes.Count > 0)
-        {
-            if(attributes.ValueTypeAttributes.Count > 0)
-            {
-                var inflectionValue = TagInflectionValueModel.Create(attributes).SourceText;
-                _ = sourceTextBuilder.Append("__tag < ").Append(inflectionValue).Append('?');
-            }
-
-            _ = sourceTextBuilder.Append("__referenceTypeContainer?.GetHashCode() ?? 0");
-
-            if(attributes.ValueTypeAttributes.Count > 0)
-                _ = sourceTextBuilder.AppendLine(":");
-        }
-
-        if(attributes.ValueTypeAttributes.Count > 1)
+        if(annotations.AllRepresentableTypes.Count > 1)
         {
             _ = sourceTextBuilder.Append("__tag switch{");
 
-            _ = attributes.ValueTypeAttributes.Aggregate(
-                sourceTextBuilder,
-                (b, a) => b.Append(a.TagValueExpression)
-                    .Append(" => ")
-                    .Append(a.GetInstanceVariableExpression(target))
-                    .AppendLine(".GetHashCode(),"))
-                .AppendLine("_ => throw new InvalidOperationException()}");
-        } else if(attributes.ValueTypeAttributes.Count == 1)
+            _ = annotations.AllRepresentableTypes.Where(t => t.Nature == RepresentableTypeNature.ValueType)
+                    .Aggregate(
+                        sourceTextBuilder,
+                        (b, a) => b.Append(a.CorrespondingTag)
+                            .Append(" => ")
+                            .Append(a.Storage.GetGetHashCodeInvocation())
+                            .AppendLine(","))
+                .AppendLine("_ => ").Append(ConstantSources.InvalidTagStateThrow)
+                .Append('}');
+        } else if(annotations.RepresentableValueTypes.Count == 1)
         {
-            _ = sourceTextBuilder.Append(attributes.ValueTypeAttributes[0].GetInstanceVariableExpression(target)).Append(".GetHashCode()");
+            var storage = annotations.RepresentableValueTypes[0].Storage;
+            _ = sourceTextBuilder.Append(storage.GetGetHashCodeInvocation());
         }
 
         var sourceText = sourceTextBuilder.Append(';').ToString();

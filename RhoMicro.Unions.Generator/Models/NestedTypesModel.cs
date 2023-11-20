@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 readonly struct NestedTypesModel
 {
     public readonly String SourceText;
@@ -25,33 +24,13 @@ readonly struct NestedTypesModel
     {
         var sourceTextBuilder = new StringBuilder();
 
-        var attributes = context.Parameters.Attributes;
+        var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
 
-        if(attributes.AllUnionTypeAttributes.Count > 1)
+        if(representableTypes.Count > 1)
         {
             _ = sourceTextBuilder.Append("private enum Tag : Byte {")
-                .AppendJoin(',', attributes.AllUnionTypeAttributes.Select(a => a.SafeAlias))
+                .AppendJoin(',', representableTypes.Select(a => a.Names.SafeAlias))
                 .Append('}');
-        }
-
-        if(attributes.ValueTypeAttributes.Count > 0)
-        {
-            _ = sourceTextBuilder.AppendLine("[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Explicit)]")
-                .AppendLine("private struct ValueTypeContainer")
-                .AppendLine("{");
-
-            _ = attributes.ValueTypeAttributes
-                .Aggregate(
-                    sourceTextBuilder,
-                    (b, a) => b.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]")
-                        .Append("public readonly ")
-                        .AppendFull(a)
-                        .Append(' ')
-                        .Append(a.SafeAlias)
-                        .AppendLine(";")
-                        .Append("public ValueTypeContainer(").AppendFull(a).Append(" value) => ")
-                        .Append(a.SafeAlias).AppendLine(" = value;"))
-                .AppendLine("}");
         }
 
         var sourceText = sourceTextBuilder.ToString();

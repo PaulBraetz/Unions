@@ -23,37 +23,37 @@ readonly struct SwitchMethodModel
         context.Source.SetSwitchMethod(context.Model);
     static SwitchMethodModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
-        var target = context.Parameters.TargetSymbol;
+        var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
+        var target = context.TargetData.TargetSymbol;
 
-        var sourceTextBuilder = attributes
-            .Select((a, i) => (Attribute: a, Index: i))
+        var sourceTextBuilder = representableTypes
+            .Select((t, i) => (Type: t, Index: i))
             .Aggregate(
                 new StringBuilder("public void Switch("),
                 (b, t) => b.Append("global::System.Action<")
-                    .AppendFull(t.Attribute)
+                    .AppendFull(t.Type)
                     .Append("> on")
-                    .Append(t.Attribute.SafeAlias)
-                    .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))
+                    .Append(t.Type.Names.SafeAlias)
+                    .AppendLine(t.Index == representableTypes.Count - 1 ? String.Empty : ","))
             .Append("){");
 
-        if(attributes.Count == 1)
+        if(representableTypes.Count == 1)
         {
             _ = sourceTextBuilder.Append("on")
-                .Append(attributes[0].SafeAlias)
+                .Append(representableTypes[0].Names.SafeAlias)
                 .Append(".Invoke(")
-                .Append(attributes[0].GetInstanceVariableExpression(target))
+                .Append(representableTypes[0].Storage.GetInstanceVariableExpression())
                 .AppendLine(");");
         } else
         {
             _ = sourceTextBuilder.AppendLine("switch(__tag){");
-            _ = attributes.Aggregate(
+            _ = representableTypes.Aggregate(
                 sourceTextBuilder,
                 (b, a) => b.Append("case ")
-                    .Append(a.TagValueExpression)
+                    .Append(a.CorrespondingTag)
                     .AppendLine(":")
-                    .Append("on").Append(a.SafeAlias).Append(".Invoke(")
-                    .Append(a.GetInstanceVariableExpression(target)).AppendLine(");return;"))
+                    .Append("on").Append(a.Names.SafeAlias).Append(".Invoke(")
+                    .Append(a.Storage.GetInstanceVariableExpression()).AppendLine(");return;"))
                 .AppendLine("default:")
                 .Append(ConstantSources.InvalidTagStateThrow).AppendLine(";}");
         }

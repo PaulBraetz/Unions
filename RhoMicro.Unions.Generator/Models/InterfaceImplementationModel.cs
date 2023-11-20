@@ -25,26 +25,29 @@ readonly struct InterfaceImplementationModel
 
     static InterfaceImplementationModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes;
-        var target = context.Parameters.TargetSymbol;
-        var targetDeclaration = context.Parameters.TargetDeclaration;
+        var attributes = context.TargetData.Annotations;
+        var target = context.TargetData.TargetSymbol;
+        var targetDeclaration = context.TargetData.TargetDeclaration;
 
-        var sourceTextBuilder = attributes.AllUnionTypeAttributes
-            .Select((a, i) => (Name: a.RepresentableTypeSymbol.ToFullString(), Index: i))
+        var sourceTextBuilder = attributes.AllRepresentableTypes
+            .Select((a, i) => (Name: a.Names.FullTypeName, Index: i))
             .Aggregate(
                 new StringBuilder(": global::RhoMicro.Unions.Abstractions.IUnion<").AppendOpen(target).Append(','),
-                (b, n) => b.Append(n.Name).Append(n.Index != attributes.AllUnionTypeAttributes.Count - 1 ? "," : String.Empty))
+                (b, n) => b.Append(n.Name).Append(n.Index != attributes.AllRepresentableTypes.Count - 1 ? "," : String.Empty))
             .AppendLine(">,")
             .Append("global::System.IEquatable<")
             .AppendOpen(target)
             .Append('>');
 
-        if(!(attributes.AllUnionTypeAttributes.Count == 1 && attributes.AllUnionTypeAttributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
+        if(!(attributes.AllRepresentableTypes.Count == 1 &&
+             attributes.AllRepresentableTypes[0].Attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
         {
-            var omissions = context.Parameters.OperatorOmissions.AllOmissions;
-            _ = attributes.AllUnionTypeAttributes
-                .Where(a => !omissions.Contains(a))
-                .Select(a => a.RepresentableTypeSymbol.ToFullString())
+            var omissions = context.TargetData.OperatorOmissions.AllOmissions;
+            _ = attributes.AllRepresentableTypes
+                .Where(a => !omissions.Contains(a) &&
+                            !a.Attribute.RepresentableTypeIsGenericParameter ||
+                             a.Attribute.Options.HasFlag(UnionTypeOptions.SupersetOfParameter))
+                .Select(a => a.Names.FullTypeName)
                 .Aggregate(
                     sourceTextBuilder,
                     (b, n) => b.AppendLine(",")

@@ -23,17 +23,21 @@ readonly struct FieldsModel
 
     private static FieldsModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes;
+        var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
+
+        var host = new StrategySourceHost(context.TargetData);
+
+        representableTypes.ForEach(s => s.Storage.Visit(host));
 
         var sourceTextBuilder = new StringBuilder();
-        if(attributes.ReferenceTypeAttributes.Count > 0)
-            _ = sourceTextBuilder.Append("private readonly Object __referenceTypeContainer;");
 
-        if(attributes.AllUnionTypeAttributes.Count > 1)
+        host.AppendReferenceTypeContainerField(sourceTextBuilder);
+
+        if(representableTypes.Count > 1)
             _ = sourceTextBuilder.Append("private readonly Tag __tag;");
 
-        if(attributes.ValueTypeAttributes.Count > 0)
-            _ = sourceTextBuilder.Append("private readonly ValueTypeContainer __valueTypeContainer;");
+        host.AppendValueTypeContainerField(sourceTextBuilder);
+        host.AppendDedicatedFields(sourceTextBuilder);
 
         var sourceText = sourceTextBuilder.ToString();
         var result = new FieldsModel(sourceText);

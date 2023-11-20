@@ -23,10 +23,14 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
     private static ToStringFunctionModel CreateDetailed(ModelCreationContext context)
     {
-        var target = context.Parameters.TargetSymbol;
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
+        var target = context.TargetData.TargetSymbol;
+        var attributes = context.TargetData.Annotations.AllRepresentableTypes;
 
-        var sourceTextBuilder = new StringBuilder("public override String ToString(){var stringRepresentation = ");
+        var sourceTextBuilder = new StringBuilder("#nullable enable")
+            .AppendLine("/// <summary>")
+            .AppendLine("/// Returns a string representation of the current instance.")
+            .AppendLine("/// </summary>")
+            .Append("public override String? ToString(){var stringRepresentation = ");
 
         AppendSimpleToStringExpression(context, sourceTextBuilder);
 
@@ -36,14 +40,15 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
             .Append('(');
 
         _ = attributes.Count == 1 ?
-            sourceTextBuilder.Append('<').Append(attributes[0].RepresentableTypeSymbol.Name).Append('>') :
+            sourceTextBuilder.Append('<').Append(attributes[0].Names.SimpleTypeName).Append('>') :
             sourceTextBuilder.AppendAggregateJoin(" | ", attributes, (b, a) =>
-                    b.Append("{(").Append("__tag == ").Append(a.TagValueExpression).Append('?')
-                    .Append("\"<").Append(a.SafeAlias).Append(">\"").Append(':')
-                    .Append('\"').Append(a.SafeAlias).Append("\")}"));
+                    b.Append("{(").Append("__tag == ").Append(a.CorrespondingTag).Append('?')
+                    .Append("\"<").Append(a.Names.SafeAlias).Append(">\"").Append(':')
+                    .Append('\"').Append(a.Names.SafeAlias).Append("\")}"));
 
         var sourceText = sourceTextBuilder
-            .Append("){{{stringRepresentation}}}\"; return result;}")
+            .AppendLine("){{{stringRepresentation}}}\"; return result;}")
+            .AppendLine("#nullable restore")
             .ToString();
         var result = new ToStringFunctionModel(sourceText);
 
@@ -51,8 +56,10 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
     }
     private static ToStringFunctionModel CreateSimple(ModelCreationContext context)
     {
-        var sourceTextBuilder = new StringBuilder()
-            .AppendLine("#nullable enable")
+        var sourceTextBuilder = new StringBuilder("#nullable enable")
+            .AppendLine("/// <summary>")
+            .AppendLine("/// Returns a string representation of the current instance.")
+            .AppendLine("/// </summary>")
             .Append("public override String? ToString() => ");
 
         AppendSimpleToStringExpression(context, sourceTextBuilder);
@@ -65,41 +72,6 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
         return result;
     }
-
-    private static void AppendSimpleToStringExpression(ModelCreationContext context, StringBuilder sourceTextBuilder)
-    {
-        var attributes = context.Parameters.Attributes;
-
-        if(attributes.AllUnionTypeAttributes.Count == 1)
-        {
-            _ = attributes.AllUnionTypeAttributes[0].RepresentableTypeSymbol.IsValueType
-                ? sourceTextBuilder.Append("__valueTypeContainer.").Append(attributes.AllUnionTypeAttributes[0].SafeAlias).AppendLine(".ToString()")
-                : sourceTextBuilder.Append("__referenceTypeContainer?.ToString()");
-        } else
-        {
-            if(context.Parameters.Attributes.ReferenceTypeAttributes.Count > 0)
-            {
-                var inflectionModel = TagInflectionValueModel.Create(attributes);
-
-                _ = sourceTextBuilder.Append("__tag < ")
-                .Append(inflectionModel.SourceText)
-                .Append(" ? __referenceTypeContainer?.ToString() : ");
-            }
-
-            _ = sourceTextBuilder.Append("__tag switch{");
-
-            _ = attributes.ReferenceTypeAttributes
-                .Select(a => a.SafeAlias)
-                .Aggregate(sourceTextBuilder, (b, a) => b.Append("Tag.").Append(a).Append(" => __referenceTypeContainer?.ToString(),"));
-
-            _ = attributes.ValueTypeAttributes
-                .Select(a => a.SafeAlias)
-                .Aggregate(sourceTextBuilder, (b, a) => b.Append("Tag.").Append(a).Append(" => __valueTypeContainer.").Append(a).AppendLine(".ToString(),"))
-                .Append("_ => ").AppendLine(ConstantSources.InvalidTagStateThrow)
-                .AppendLine("}");
-        }
-    }
-
     private static ToStringFunctionModel CreateOmitted(ModelCreationContext _)
     {
         var sourceText = String.Empty;
@@ -108,9 +80,25 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
         return result;
     }
 
+    private static void AppendSimpleToStringExpression(ModelCreationContext context, StringBuilder sourceTextBuilder)
+    {
+        var attributes = context.TargetData.Annotations;
+
+        _ = attributes.AllRepresentableTypes.Count == 1 ?
+            sourceTextBuilder.Append(attributes.AllRepresentableTypes[0].Storage.GetToStringInvocation()) :
+            sourceTextBuilder.Append("__tag switch{")
+                .AppendAggregate(
+                    attributes.AllRepresentableTypes,
+                    (b, t) => b.Append(t.CorrespondingTag)
+                        .Append(" => ").Append(t.Storage.GetToStringInvocation())
+                        .AppendLine(","))
+                .Append("_ => ").AppendLine(ConstantSources.InvalidTagStateThrow)
+                .AppendLine("}");
+    }
+
     public static ToStringFunctionModel Create(ModelCreationContext context)
     {
-        var result = context.Parameters.Attributes.Settings.ToStringSetting switch
+        var result = context.TargetData.Annotations.Settings.ToStringSetting switch
         {
             ToStringSetting.Simple => CreateSimple(context),
             ToStringSetting.Detailed => CreateDetailed(context),

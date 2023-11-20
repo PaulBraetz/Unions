@@ -23,7 +23,7 @@ public sealed class Analyzer : IIncrementalGenerator
                 var result = new DiagnosticsModelBuilder()
                                 .ReportDiagnostics()
                                 .Diagnose(parameters, t)
-                                .Build(parameters.Attributes.Settings);
+                                .Build(parameters.Annotations.Settings);
 
                 return result;
             });

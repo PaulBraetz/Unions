@@ -25,8 +25,49 @@ internal static partial class Diagnostics
         UnionTypeSettingsOnNonUnionType = 12,
         RepresentableTypeIsSupertype = 13,
         RepresentableTypeIsInterface = 14,
-        ReservedGenericParameterName = 15
+        ReservedGenericParameterName = 15,
+        UnknownGenericParameterName = 16,
+        PossibleBoxingStrategy = 17,
+        BoxingStrategy = 18,
+        PossibleTleStrategy = 19,
+        TleStrategy = 20,
+        SmallGenericUnion = 21
     }
+    public static Diagnostic SmallGenericUnion(Location location) =>
+        Create(
+            Id.SmallGenericUnion,
+            location,
+            DiagnosticSeverity.Info);
+    public static Diagnostic PossibleBoxingStrategy(Location location, String typeName) =>
+        Create(
+            Id.PossibleBoxingStrategy,
+            location,
+            DiagnosticSeverity.Warning,
+            typeName);
+    public static Diagnostic BoxingStrategy(Location location, String typeName) =>
+        Create(
+            Id.BoxingStrategy,
+            location,
+            DiagnosticSeverity.Warning,
+            typeName);
+    public static Diagnostic PossibleTleStrategy(Location location, String typeName) =>
+        Create(
+            Id.PossibleTleStrategy,
+            location,
+            DiagnosticSeverity.Warning,
+            typeName);
+    public static Diagnostic TleStrategy(Location location, String typeName) =>
+        Create(
+            Id.TleStrategy,
+            location,
+            DiagnosticSeverity.Warning,
+            typeName);
+    public static Diagnostic UnknownGenericParameterName(Location location, String name) =>
+        Create(
+            Id.UnknownGenericParameterName,
+            location,
+            DiagnosticSeverity.Error,
+            name);
     public static Diagnostic ReservedGenericParameterName(Location location, String name) =>
         Create(
             Id.ReservedGenericParameterName,

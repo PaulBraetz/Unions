@@ -78,13 +78,13 @@ public sealed class Generator : IIncrementalGenerator
             Extensions.IsUnionDeclaration,
             SourceCarry<TargetDataModel>.Create)
             .SelectCarry(
-                c => c.Parameters,
+                c => c.TargetData,
                 c => c.Diagnostics.Diagnose(c.Model, c.CancellationToken))
             .SelectCarry((c, d, s, t) =>(Context: c, IsFirst: handledTargets.Add(c.TargetSymbol)))
             .Where(c => !c.HasContext || c.Context.IsFirst)
             .SelectCarry((c, d, s, t) => c.Context)
             .SelectCarry(
-                c => c.Parameters.TargetSymbol,
+                c => c.TargetData.TargetSymbol,
                 c => c.Source.SetTarget(c.Model));
 
         models = _projections.Invoke(models);

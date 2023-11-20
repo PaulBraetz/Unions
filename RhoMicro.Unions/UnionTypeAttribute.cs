@@ -15,12 +15,18 @@ public enum UnionTypeOptions
 {
     /// <summary>
     /// </summary>
-    None = 0b0,
+    None = 0x00,
     /// <summary>
     /// Instructs the generator to emit an implicit conversion to the representable type if it is the only one.
     /// In effect, this option will enable the union type to act as an alias wrapper for the representable type.
     /// </summary>
-    ImplicitConversionIfSolitary = 0b1
+    ImplicitConversionIfSolitary = 0x01,
+    /// <summary>
+    /// Instructs the generator to emit a superset conversion operator implementation even
+    /// the representable type is a generic type parameter. By default, it is omitted because of possible
+    /// unification for certain generic arguments.
+    /// </summary>
+    SupersetOfParameter = 0x02
 }
 
 /// <summary>
@@ -37,7 +43,7 @@ public enum UnionTypeOptions
 /*
            | box |value| auto | field
     struct | rc! | vc  | vc   | cc
-    class  | rc  | rc! | rc   | rc!
+    class  | rc  | rc! | rc   | cc
     none   | rc! | vc! | rc!  | cc
 */
 public enum StorageOption
@@ -46,17 +52,17 @@ public enum StorageOption
     /// The generator will automatically decide on a storage strategy.
     /// <para>
     /// If the representable type is <b>known to be a value type</b>,
-    /// this will store values of that type inside a value type container.
+    /// this will store values of that type inside a shared value type container.
     /// <b>Boxing will not occur.</b>
     /// </para>
     /// <para>
     /// If the representable type is <b>known to be a reference type</b>,
-    /// this will store values of that type inside a reference type container.
+    /// this will store values of that type inside a shared reference type container.
     /// </para>
     /// <para>
     /// If the representable type is <b>neither known to be a reference type
     /// nor a value type</b>, this option will cause values of that type to 
-    /// be stored inside a reference type container.
+    /// be stored inside a shared reference type container.
     /// <b>If the representable type is a generic type parameter,
     /// boxing will occur for value type arguments to that parameter.</b>
     /// </para>
@@ -65,7 +71,7 @@ public enum StorageOption
 
     /// <summary>
     /// The generator will always store values of the representable type
-    /// inside a reference type container.
+    /// inside a shared reference type container.
     /// <para>
     /// If the representable type is <b>known to be a value type</b>,
     /// <b>boxing will occur</b>.
@@ -82,18 +88,18 @@ public enum StorageOption
     /// inside a value type container.
     /// <para>
     /// If the representable type is <b>known to be a value type</b>,
-    /// this will store values of that type inside a value type container.
+    /// this will store values of that type inside a shared value type container.
     /// <b>Boxing will not occur.</b>
     /// </para>
     /// <para>
     /// If the representable type is <b>known to be a reference type</b>,
-    /// this will store values of that type inside a reference type container.
+    /// this will store values of that type inside a shared reference type container.
     /// <b>Boxing will not occur.</b>
     /// </para>
     /// <para>
     /// If the representable type is <b>neither known to be a reference type
     /// nor a value type</b>, this option will cause values of that type to 
-    /// be stored inside a value type container.
+    /// be stored inside a shared value type container.
     /// <b>If the representable type is a generic type parameter,
     /// an exception of type <see cref="TypeLoadException"/> will occur for
     /// reference type arguments to that parameter.</b>
@@ -103,20 +109,22 @@ public enum StorageOption
 
     /// <summary>
     /// The generator will attempt to store values of the representable type
-    /// inside a dedicated field for that type.
+    /// inside a dedicated container for that type.
     /// <para>
     /// If the representable type is <b>known to be a value type</b>,
-    /// this will store values of that type inside a value type container.
+    /// this will store values of that type inside a dedicated 
+    /// value type container.
     /// <b>Boxing will not occur.</b>
     /// </para>
     /// <para>
     /// If the representable type is <b>known to be a reference type</b>,
-    /// this will store values of that type inside a reference type container.
+    /// this will store values of that type inside a 
+    /// dedicated reference type container.
     /// </para>
     /// <para>
     /// If the representable type is <b>neither known to be a reference type
     /// nor a value type</b>, this option will cause values of that type to 
-    /// be stored inside a strongly typed container.
+    /// be stored inside a dedicated strongly typed container.
     /// <b>Boxing will not occur.</b>
     /// </para>
     /// </summary>

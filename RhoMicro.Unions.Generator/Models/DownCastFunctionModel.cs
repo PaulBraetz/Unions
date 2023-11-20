@@ -20,8 +20,8 @@ readonly struct DownCastFunctionModel
             context.Source.SetDownCastFunction(context.Model);
     private static DownCastFunctionModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
-        var target = context.Parameters.TargetSymbol;
+        var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
+        var target = context.TargetData.TargetSymbol;
 
         var sourceTextBuilder = new StringBuilder("public")
             .Append(' ')
@@ -36,26 +36,26 @@ readonly struct DownCastFunctionModel
             .Append(',')
             .AppendAggregateJoin(
                 ",",
-                attributes,
+                representableTypes,
                 (b, a) => b.AppendFull(a))
             .Append('>');
 
 #pragma warning disable IDE0045 // Convert to conditional expression
-        if(attributes.Count == 1)
+        if(representableTypes.Count == 1)
         {
             _ = sourceTextBuilder.Append(" => ")
                 .Append(ConstantSources.GenericTResultType)
-                .Append(".Create<").AppendFull(attributes[0])
-                .Append(">(").Append(attributes[0].GetInstanceVariableExpression(target)).Append(')');
+                .Append(".Create<").AppendFull(representableTypes[0])
+                .Append(">(").Append(representableTypes[0].Storage.GetInstanceVariableExpression()).Append(')');
         } else
         {
-            _ = attributes.Aggregate(
+            _ = representableTypes.Aggregate(
                 sourceTextBuilder.Append(" => __tag switch{"),
-                (b, a) => b.Append(a.TagValueExpression)
+                (b, a) => b.Append(a.CorrespondingTag)
                     .Append(" => ")
                     .Append(ConstantSources.GenericTResultType)
                     .Append(".Create<").AppendFull(a)
-                    .Append(">(").Append(a.GetInstanceVariableExpression(target)).Append(')')
+                    .Append(">(").Append(a.Storage.GetInstanceVariableExpression()).Append(')')
                     .AppendLine(","))
                 .Append("_ => ")
                 .Append(ConstantSources.InvalidTagStateThrow)

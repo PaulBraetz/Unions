@@ -9,11 +9,41 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
 
 internal static partial class Extensions
 {
+    public static void ForEach<T>(this IEnumerable<T> values, Action<T> handler)
+    {
+        foreach(var v in values)
+        {
+            handler.Invoke(v);
+        }
+    }
+
+    public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
+        this IncrementalValuesProvider<SourceCarry<TSource>> provider,
+        Func<TSource, DiagnosticsModelBuilder, SourceModelBuilder, CancellationToken, TResult> project) =>
+        provider.Select((c, t) => c.Project((s, d, b) => project.Invoke(s, d, b, t)));
+    public static IncrementalValuesProvider<SourceCarry<TargetDataModel>> SelectCarry<TModel>(
+        this IncrementalValuesProvider<SourceCarry<TargetDataModel>> provider,
+        Func<ModelCreationContext, TModel> modelFactory,
+        Action<ModelIntegrationContext<TModel>> modelIntegration) =>
+        provider.SelectCarry((c, d, s, t) =>
+        {
+            t.ThrowIfCancellationRequested();
+
+            var invocationContext = new ModelCreationContext(c, t);
+            var model = modelFactory.Invoke(invocationContext);
+
+            var integrationContext = new ModelIntegrationContext<TModel>(d, s, t, model);
+            modelIntegration.Invoke(integrationContext);
+
+            return c;
+        });
+
     public static Boolean ShouldReport(this Diagnostic diagnostic, DiagnosticsLevelSettings settings) =>
         diagnostic.Severity switch
         {
@@ -22,22 +52,7 @@ internal static partial class Extensions
             DiagnosticSeverity.Info => settings.HasFlag(DiagnosticsLevelSettings.Info),
             _ => false
         };
-    public static String GetSpecificAccessibility(this TargetDataModel parameters, UnionTypeAttribute attribute)
-    {
-        var accessibility = parameters.Attributes.Settings.ConstructorAccessibility;
 
-        if(accessibility == ConstructorAccessibilitySetting.PublicIfInconvertible &&
-           parameters.OperatorOmissions.AllOmissions.Contains(attribute))
-        {
-            accessibility = ConstructorAccessibilitySetting.Public;
-        }
-
-        var result = accessibility == ConstructorAccessibilitySetting.Public ?
-            "public" :
-            "private";
-
-        return result;
-    }
     public static Boolean IsError(this Diagnostic diagnostic) =>
         diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
     public static Boolean HasUnionTypeAttribute(this ITypeSymbol symbol) =>
@@ -77,20 +92,20 @@ internal static partial class Extensions
         return symbol.ToDisplayString(format);
     }
 
-    public static StringBuilder AppendOpen(this StringBuilder builder, UnionTypeAttribute attribute) =>
-        builder.Append(attribute.OpenTypeName);
+    public static StringBuilder AppendOpen(this StringBuilder builder, RepresentableTypeData data) =>
+        builder.Append(data.Names.OpenTypeName);
     public static StringBuilder AppendOpen(this StringBuilder builder, INamedTypeSymbol symbol) =>
         builder.Append(symbol.ToOpenString());
-    public static StringBuilder AppendCommentRef(this StringBuilder builder, UnionTypeAttribute attribute) =>
-        builder.Append(attribute.CommentRef);
+    public static StringBuilder AppendCommentRef(this StringBuilder builder, RepresentableTypeData data) =>
+        builder.Append(data.DocCommentRef);
     public static StringBuilder AppendCommentRef(this StringBuilder builder, TargetDataModel data) =>
         builder.AppendCommentRef(data.TargetSymbol);
     public static StringBuilder AppendCommentRef(this StringBuilder builder, INamedTypeSymbol symbol) =>
         builder.Append("<see cref=\"").Append(symbol.ToFullString().Replace('<', '{').Replace('>', '}')).Append("\"/>");
     public static StringBuilder AppendFull(this StringBuilder builder, INamedTypeSymbol symbol) =>
         builder.Append(symbol.ToFullString());
-    public static StringBuilder AppendFull(this StringBuilder builder, UnionTypeAttribute attribute) =>
-        builder.Append(attribute.FullTypeName);
+    public static StringBuilder AppendFull(this StringBuilder builder, RepresentableTypeData data) =>
+        builder.Append(data.Names.FullTypeName);
 
     public static String GetContainingClassHead(this ITypeSymbol nestedType)
     {
@@ -136,6 +151,42 @@ internal static partial class Extensions
         var result = resultBuilder.ToString();
 
         return result;
+    }
+
+    //source: https://stackoverflow.com/a/58853591
+    private static readonly Regex _camelCasePattern =
+        new(@"([A-Z])([A-Z]+|[a-z0-9_]+)($|[A-Z]\w*)", RegexOptions.Compiled);
+    public static String ToCamelCase(this String value)
+    {
+        if(value.Length == 0)
+        {
+            return value;
+        }
+
+        if(value.Length == 1)
+        {
+            return value.ToLowerInvariant();
+        }
+
+        //source: https://stackoverflow.com/a/58853591
+        var result = _camelCasePattern.Replace(
+            value,
+            static m => $"{m.Groups[1].Value.ToLowerInvariant()}{m.Groups[2].Value.ToLowerInvariant()}{m.Groups[3].Value}");
+
+        return result;
+    }
+    public static String ToGeneratedCamelCase(this String value)
+    {
+        var result = value.ToCamelCase();
+        if(result.StartsWith("__"))
+        {
+            return result;
+        } else if(result.StartsWith("_"))
+        {
+            return $"_{result}";
+        }
+
+        return $"__{result}";
     }
 
     public static StringBuilder AppendJoin<T>(this StringBuilder builder, String separator, IEnumerable<T> values)

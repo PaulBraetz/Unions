@@ -19,40 +19,40 @@ readonly struct MatchFunctionModel
         context.Source.SetMatchFunction(context.Model);
     static MatchFunctionModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
-        var target = context.Parameters.TargetSymbol;
+        var representableType = context.TargetData.Annotations.AllRepresentableTypes;
+        var target = context.TargetData.TargetSymbol;
 
-        var sourceTextBuilder = attributes
-            .Select((a, i) => (Attribute: a, Index: i))
+        var sourceTextBuilder = representableType
+            .Select((t, i) => (Type: t, Index: i))
             .Aggregate(
                 new StringBuilder("public TResult Match<")
                     .Append(ConstantSources.GenericTResultType)
                     .Append(">("),
                 (b, t) => b.Append("global::System.Func<")
-                    .AppendFull(t.Attribute)
+                    .AppendFull(t.Type)
                     .Append(", ")
                     .Append(ConstantSources.GenericTResultType)
                     .Append("> on")
-                    .Append(t.Attribute.SafeAlias)
-                    .AppendLine(t.Index == attributes.Count - 1 ? String.Empty : ","))
+                    .Append(t.Type.Names.SafeAlias)
+                    .AppendLine(t.Index == representableType.Count - 1 ? String.Empty : ","))
             .AppendLine(") =>");
 
-        if(attributes.Count == 1)
+        if(representableType.Count == 1)
         {
             _ = sourceTextBuilder.Append("on")
-                .Append(attributes[0].SafeAlias)
+                .Append(representableType[0].Names.SafeAlias)
                 .Append(".Invoke(")
-                .Append(attributes[0].GetInstanceVariableExpression(target))
+                .Append(representableType[0].Storage.GetInstanceVariableExpression())
                 .AppendLine(");");
         } else
         {
             _ = sourceTextBuilder.AppendLine("__tag switch{");
-            _ = attributes.Aggregate(
+            _ = representableType.Aggregate(
                 sourceTextBuilder,
-                (b, a) => b.Append(a.TagValueExpression)
+                (b, a) => b.Append(a.CorrespondingTag)
                     .AppendLine(" => ")
-                    .Append("on").Append(a.SafeAlias).Append(".Invoke(")
-                    .Append(a.GetInstanceVariableExpression(target)).AppendLine("),"))
+                    .Append("on").Append(a.Names.SafeAlias).Append(".Invoke(")
+                    .Append(a.Storage.GetInstanceVariableExpression()).AppendLine("),"))
                 .AppendLine("_ =>")
                 .AppendLine(ConstantSources.InvalidTagStateThrow)
                 .AppendLine("};");

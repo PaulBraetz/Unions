@@ -1,0 +1,33 @@
+﻿#pragma warning disable CS8618
+
+namespace RhoMicro.Unions.Generator;
+
+using RhoMicro.Unions;
+
+using System;
+
+abstract partial class StorageStrategy
+{
+    sealed class ValueContainerStrategy(
+        String safeAlias,
+        String fullTypeName,
+        StorageOption selectedOption,
+        RepresentableTypeNature typeNature)
+        : StorageStrategy(safeAlias, fullTypeName, selectedOption, typeNature)
+    {
+        public override String GetConvertedInstanceVariableExpression(String targetType, String instance = "this") =>
+            $"(Util.UnsafeConvert<{FullTypeName}, {targetType}>({instance}.__valueTypeContainer.{SafeAlias}))";
+        public override String GetInstanceVariableExpression(String instance = "this") =>
+           $"({instance}.__valueTypeContainer.{SafeAlias})";
+        public override String GetInstanceVariableAssignmentExpression(String valueExpression, String instance = "this") =>
+            $"{instance}.__valueTypeContainer = new({valueExpression})";
+        public override void Visit(StrategySourceHost host)
+        {
+            host.AddValueTypeContainerField();
+            host.AddValueTypeContainerType();
+            host.AddValueTypeVontainerInstanceFieldAndCtor(this);
+        }
+        public override void Visit(DiagnosticsModelBuilder diagnostics, TargetDataModel target) =>
+            diagnostics.DiagnoseValueStorage(this, target);
+    }
+}

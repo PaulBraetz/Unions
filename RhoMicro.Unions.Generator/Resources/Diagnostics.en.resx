@@ -123,6 +123,12 @@
   <data name="AliasCollision_Title" xml:space="preserve">
     <value>Alias Collision</value>
   </data>
+  <data name="BoxingStrategy_Message" xml:space="preserve">
+    <value>Boxing will occur for the representable type {0}. Consider using a different storage option.</value>
+  </data>
+  <data name="BoxingStrategy_Title" xml:space="preserve">
+    <value>Boxing Strategy Detected</value>
+  </data>
   <data name="DuplicateUnionTypeAttributes_Message" xml:space="preserve">
     <value>Union types may not be declared using duplicate 'UnionType' attributes of the same representable type ({0}).</value>
   </data>
@@ -165,6 +171,18 @@
   <data name="NonPartialDeclaration_Title" xml:space="preserve">
     <value>Nonpartial Union Declaration</value>
   </data>
+  <data name="PossibleBoxingStrategy_Message" xml:space="preserve">
+    <value>Boxing may occur for the representable type {0}. Consider constraining it to either `class` or `struct` in order to help the generator emit an efficient implementation. Alternatively, use the `StorageOption.Field` option to generate dedicated field for the type.</value>
+  </data>
+  <data name="PossibleBoxingStrategy_Title" xml:space="preserve">
+    <value>Possible Boxing Strategy Detected</value>
+  </data>
+  <data name="PossibleTleStrategy_Message" xml:space="preserve">
+    <value>Binding a reference type to the representable type {0} will cause a `TypeLoadException` to be thrown. Consider constraining the parameter or using a different storage option.</value>
+  </data>
+  <data name="PossibleTleStrategy_Title" xml:space="preserve">
+    <value>Possible TypeLoadException Detected</value>
+  </data>
   <data name="RecordTarget_Message" xml:space="preserve">
     <value>Union types may not be declared as 'record' types.</value>
   </data>
@@ -189,16 +207,34 @@
   <data name="ReservedGenericParameterName_Title" xml:space="preserve">
     <value>Reserved Generic Parameter Name</value>
   </data>
+  <data name="SmallGenericUnion_Message" xml:space="preserve">
+    <value>The small layout setting was ignored because the target union type is generic.</value>
+  </data>
+  <data name="SmallGenericUnion_Title" xml:space="preserve">
+    <value>Ignoring Small Layout</value>
+  </data>
   <data name="StaticTarget_Message" xml:space="preserve">
     <value>Union types may not be declared using the 'static' modifier.</value>
   </data>
   <data name="StaticTarget_Title" xml:space="preserve">
     <value>Static Union Type Declaration</value>
   </data>
+  <data name="TleStrategy_Message" xml:space="preserve">
+    <value>The selected storage option for {0} was ignored because it would cause a `TypeLoadException` to be thrown.</value>
+  </data>
+  <data name="TleStrategy_Title" xml:space="preserve">
+    <value>TypeLoadException Prevented</value>
+  </data>
   <data name="UnionTypeSettingsOnNonUnionType_Message" xml:space="preserve">
     <value>The union type settings attribute will be ignored because the target type is not a union type.</value>
   </data>
   <data name="UnionTypeSettingsOnNonUnionType_Title" xml:space="preserve">
     <value>Union Type Settings Ignored</value>
+  </data>
+  <data name="UnknownGenericParameterName_Message" xml:space="preserve">
+    <value>The targeted union type contains an unknown parameter name `{0}`. It could not be located in the type parameter list.</value>
+  </data>
+  <data name="UnknownGenericParameterName_Title" xml:space="preserve">
+    <value>Unknown Generic Parameter Name</value>
   </data>
 </root>

@@ -21,7 +21,7 @@ readonly struct GetRepresentedTypeFunctionModel
 
     static GetRepresentedTypeFunctionModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
+        var attributes = context.TargetData.Annotations.AllRepresentableTypes;
 
         var sourceTextBuilder = new StringBuilder("public Type GetRepresentedType() => ");
 
@@ -36,7 +36,7 @@ readonly struct GetRepresentedTypeFunctionModel
             _ = sourceTextBuilder.AppendLine("__tag switch {")
                 .AppendAggregate(
                     attributes,
-                    (b, a) => b.Append(a.TagValueExpression).Append(" => typeof(")
+                    (b, a) => b.Append(a.CorrespondingTag).Append(" => typeof(")
                         .AppendFull(a).AppendLine("),"))
                 .Append("_ => ").AppendLine(ConstantSources.InvalidTagStateThrow)
                 .AppendLine("};");

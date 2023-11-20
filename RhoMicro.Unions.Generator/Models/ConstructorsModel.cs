@@ -24,24 +24,23 @@ readonly struct ConstructorsModel
 
     private static ConstructorsModel Create(ModelCreationContext context)
     {
-        var (symbol, _, _, attributes) = context.Parameters;
+        var target = context.TargetData.TargetSymbol;
+        var annotations = context.TargetData.Annotations;
 
-        var sourceText = attributes.AllUnionTypeAttributes
+        var sourceText = annotations.AllRepresentableTypes
             .Aggregate(new StringBuilder(), (b, a) =>
             {
-                var accessibility = context.Parameters.GetSpecificAccessibility(a);
+                var accessibility = context.TargetData.GetSpecificAccessibility(a);
 
-                _ = b.Append(accessibility).Append(' ').Append(symbol.Name).Append('(').AppendFull(a).AppendLine(" value){");
+                _ = b.Append(accessibility).Append(' ').Append(target.Name).Append('(')
+                    .AppendFull(a).AppendLine(" value){");
 
-                if(attributes.AllUnionTypeAttributes.Count > 1)
-                    _ = b.Append("__tag = Tag.").Append(a.SafeAlias).AppendLine(";");
+                if(annotations.AllRepresentableTypes.Count > 1)
+                    _ = b.Append("__tag = ").Append(a.CorrespondingTag).AppendLine(";");
 
-                //TODO: how to store etc. generic types
-
-                var result = (a.RepresentableTypeSymbol.IsValueType ?
-                    b.AppendLine("__valueTypeContainer = new(value);") :
-                    b.AppendLine("__referenceTypeContainer = value;"))
-                    .AppendLine("}");
+                var assignment = a.Storage.GetInstanceVariableAssignmentExpression("value");
+                var result = b.Append(assignment)
+                    .AppendLine(";}");
 
                 return result;
             }).ToString();

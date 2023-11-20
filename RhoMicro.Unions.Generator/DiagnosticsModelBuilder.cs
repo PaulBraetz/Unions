@@ -12,6 +12,7 @@ using RhoMicro.Unions;
 using System.Reflection;
 using System.Linq.Expressions;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Immutable;
 
 sealed class DiagnosticsModelBuilder
 {
@@ -75,9 +76,47 @@ sealed class DiagnosticsModelBuilder
     }
 
     #region Auto Diagnosers
-    private void DiagnoseReservedGenericParameterName(TargetDataModel parameters)
+    private void DiagnoseSmallGenericUnion(TargetDataModel model)
     {
-        var collisions = parameters.TargetSymbol.TypeParameters
+        if(!model.TargetSymbol.IsGenericType ||
+            model.Annotations.Settings.Layout != LayoutSetting.Small)
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+        var diagnostic = Diagnostics.SmallGenericUnion(location);
+        _ = Add(diagnostic);
+    }
+    private void DiagnoseContainerStrategies(TargetDataModel model) =>
+        model.Annotations.AllRepresentableTypes.ForEach(t => t.Storage.Visit(this, model));
+    private void DiagnoseUnknownGenericParameterName(TargetDataModel model)
+    {
+        var available = model.TargetSymbol.TypeParameters
+            .Select(p => p.Name)
+            .ToImmutableHashSet();
+        var unknowns = model.Annotations.AllRepresentableTypes
+            .Where(a => a.Attribute.RepresentableTypeIsGenericParameter)
+            .Where(a => !available.Contains(a.Names.SimpleTypeName))
+            .Select(a => a.Names.SimpleTypeName)
+            .ToArray();
+
+        if(unknowns.Length == 0)
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+
+        foreach(var unknown in unknowns)
+        {
+            var diagnostic = Diagnostics.UnknownGenericParameterName(location, unknown);
+            _ = Add(diagnostic);
+        }
+    }
+    private void DiagnoseReservedGenericParameterName(TargetDataModel model)
+    {
+        var collisions = model.TargetSymbol.TypeParameters
             .Select(p => p.Name)
             .Where(ConstantSources.ReservedGenericTypeNames.Contains)
             .ToArray();
@@ -87,7 +126,7 @@ sealed class DiagnosticsModelBuilder
             return;
         }
 
-        var location = parameters.TargetDeclaration.GetLocation();
+        var location = model.TargetDeclaration.GetLocation();
 
         foreach(var collision in collisions)
         {
@@ -95,31 +134,33 @@ sealed class DiagnosticsModelBuilder
             _ = Add(diagnostic);
         }
     }
-    private void DiagnoseOperatorOmissions(TargetDataModel parameters)
+    private void DiagnoseOperatorOmissions(TargetDataModel model)
     {
-        var omissions = parameters.OperatorOmissions;
-        var location = parameters.TargetDeclaration.GetLocation();
+        var omissions = model.OperatorOmissions;
+        var location = model.TargetDeclaration.GetLocation();
 
         foreach(var interfaceOmission in omissions.Interfaces)
         {
-            var diagnostic = Diagnostics.RepresentableTypeIsInterface(location, interfaceOmission.RepresentableTypeSymbol!.Name);
+            var diagnostic = Diagnostics.RepresentableTypeIsInterface(
+                location,
+                interfaceOmission.Names.SimpleTypeName);
             _ = Add(diagnostic);
         }
 
         foreach(var supertypes in omissions.Supertypes)
         {
-            var diagnostic = Diagnostics.RepresentableTypeIsSupertype(location, supertypes.RepresentableTypeSymbol!.Name);
+            var diagnostic = Diagnostics.RepresentableTypeIsSupertype(
+                location,
+                supertypes.Names.SimpleTypeName);
             _ = Add(diagnostic);
         }
     }
-    private void DiagnoseUnionTypeSettingsOnNonUnionType(TargetDataModel parameters)
+    private void DiagnoseUnionTypeSettingsOnNonUnionType(TargetDataModel model)
     {
-        var unionTypeAttributes = parameters.Attributes.AllUnionTypeAttributes;
-        var relationAttributes = parameters.Attributes.AllRelationAttributes;
+        var representableTypes = model.Annotations.AllRepresentableTypes;
 
-        if(unionTypeAttributes.Count > 0 ||
-           relationAttributes.Count > 0 ||
-           !parameters.TargetSymbol
+        if(representableTypes.Count > 0 ||
+           !model.TargetSymbol
             .GetAttributes()
             .OfUnionTypeSettingsAttribute()
             .Any())
@@ -127,96 +168,94 @@ sealed class DiagnosticsModelBuilder
             return;
         }
 
-        var location = parameters.TargetDeclaration.GetLocation();
+        var location = model.TargetDeclaration.GetLocation();
         var diagnostics = Diagnostics.UnionTypeSettingsOnNonUnionType(location);
         _ = Add(diagnostics);
     }
-    private void DiagnoseImplicitConversionIfSolitary(TargetDataModel parameters)
+    private void DiagnoseImplicitConversionIfSolitary(TargetDataModel model)
     {
-        var attributes = parameters.Attributes.AllUnionTypeAttributes;
-        var location = parameters.TargetDeclaration.GetLocation();
+        var attributes = model.Annotations.AllRepresentableTypes;
+        var location = model.TargetDeclaration.GetLocation();
 
         if(attributes.Count == 1 &&
-           attributes[0].Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary))
+           attributes[0].Attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary))
         {
             var diagnostic = Diagnostics.ImplicitConversionOptionOnSolitary(
-                parameters.TargetSymbol.Name,
-                attributes[0].TypeName,
+                model.TargetSymbol.Name,
+                attributes[0].Names.SimpleTypeName,
                 location);
             _ = Add(diagnostic);
         } else if(attributes.Count > 1 &&
-           attributes.Any(a => a.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
+           attributes.Any(a => a.Attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary)))
         {
             var diagnostic = Diagnostics.ImplicitConversionOptionOnNonSolitary(location);
             _ = Add(diagnostic);
         }
     }
-    private void DiagnoseUnionTypeCount(TargetDataModel parameters)
+    private void DiagnoseUnionTypeCount(TargetDataModel model)
     {
-        var count = parameters.Attributes.AllUnionTypeAttributes.Count;
+        var count = model.Annotations.AllRepresentableTypes.Count;
         if(count <= Byte.MaxValue)
             return;
 
-        var location = parameters.TargetDeclaration.GetLocation();
+        var location = model.TargetDeclaration.GetLocation();
         var diagnostics = Diagnostics.TooManyTypes(location);
         _ = Add(diagnostics);
     }
-    private void DiagnosePartiality(TargetDataModel parameters)
+    private void DiagnosePartiality(TargetDataModel model)
     {
-        if(parameters.TargetDeclaration.IsPartial())
+        if(model.TargetDeclaration.IsPartial())
             return;
 
-        var location = parameters.TargetDeclaration.Identifier.GetLocation();
+        var location = model.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.NonPartialDeclaration(location);
         _ = Add(diagnostics);
     }
-    private void DiagnoseNonStatic(TargetDataModel parameters)
+    private void DiagnoseNonStatic(TargetDataModel model)
     {
-        if(!parameters.TargetDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
+        if(!model.TargetDeclaration.Modifiers.Any(SyntaxKind.StaticKeyword))
             return;
 
-        var location = parameters.TargetDeclaration.Identifier.GetLocation();
+        var location = model.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.StaticTarget(location);
         _ = Add(diagnostics);
     }
-    private void DiagnoseNonRecord(TargetDataModel parameters)
+    private void DiagnoseNonRecord(TargetDataModel model)
     {
-        if(!parameters.TargetDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
-            !parameters.TargetDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
+        if(!model.TargetDeclaration.IsKind(SyntaxKind.RecordDeclaration) &&
+            !model.TargetDeclaration.IsKind(SyntaxKind.RecordStructDeclaration))
         {
             return;
         }
 
-        var location = parameters.TargetDeclaration.Identifier.GetLocation();
+        var location = model.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.RecordTarget(location);
         _ = Add(diagnostics);
     }
-    private void DiagnoseUnionTypeAttribute(TargetDataModel parameters)
+    private void DiagnoseUnionTypeAttribute(TargetDataModel model)
     {
-        if(parameters.Attributes.AllUnionTypeAttributes.Count > 0)
+        if(model.Annotations.AllRepresentableTypes.Count > 0)
             return;
 
-        var location = parameters.TargetDeclaration.Identifier.GetLocation();
+        var location = model.TargetDeclaration.Identifier.GetLocation();
         var diagnostics = Diagnostics.MissingUnionTypeAttribute(location);
         _ = Add(diagnostics);
     }
-    //TODO: support duplicate representable types
-    //-> no factories, impl/expl, ISupertype interface declarations
-    private void DiagnoseUniqueUnionTypeAttributes(TargetDataModel parameters)
+    private void DiagnoseUniqueUnionTypeAttributes(TargetDataModel model)
     {
-        _ = parameters.Attributes.AllUnionTypeAttributes
-            .GroupBy(t => t.FullTypeName)
-            .Select(g => (Name: g.Key, Locations: g.Select(t => parameters.TargetDeclaration.GetLocation()).ToArray()))
+        _ = model.Annotations.AllRepresentableTypes
+            .GroupBy(t => t.Names.FullTypeName)
+            .Select(g => (Name: g.Key, Locations: g.Select(t => model.TargetDeclaration.GetLocation()).ToArray()))
             .Where(t => t.Locations.Length > 1)
             .SelectMany(t => t.Locations.Skip(1).Select(l => Diagnostics.DuplicateUnionTypeAttributes(t.Name, l)))
             .Aggregate(this, (b, d) => b.Add(d));
     }
     private void DiagnoseAliasCollisions(TargetDataModel parameters)
     {
-        var duplicates = parameters.Attributes.AllUnionTypeAttributes
-            .GroupBy(a => a.SafeAlias)
+        var duplicates = parameters.Annotations.AllRepresentableTypes
+            .GroupBy(a => a.Names.SafeAlias)
             .Where(g => g.Skip(1).Any())
-            .Select(g => g.First().TypeName);
+            .Select(g => g.First().Names.SimpleTypeName);
         if(!duplicates.Any())
         {
             return;
@@ -274,6 +313,94 @@ sealed class DiagnosticsModelBuilder
             d.Invoke(this, parameters, token);
 
         return this;
+    }
+
+    internal void DiagnoseReferenceStorage(StorageStrategy strategy, TargetDataModel target)
+    {
+        /*
+                   | box |value| auto | field
+            struct | rc! | vc  | vc   | cc
+            class  | rc  | rc! | rc   | cc
+            none   | rc! | rc! | rc!  | cc
+
+                   | rc         | vc    | cc
+            struct | box!       |       | 
+            class  | value!     |       | 
+            none   | box!/auto! | value!| 
+        */
+        var selectedOption = strategy.SelectedOption;
+        var nature = strategy.TypeNature;
+
+        switch(nature)
+        {
+            case RepresentableTypeNature.ValueType
+                when selectedOption == StorageOption.Reference:
+                //consumer attempted to store value type in reference container
+                //warn about boxing
+                add(Diagnostics.BoxingStrategy);
+                return;
+            case RepresentableTypeNature.ReferenceType
+                when selectedOption == StorageOption.Value:
+                //consumer attempted to store reference value in value container
+                //warn about ignored option due to guaranteed TLE
+                add(Diagnostics.TleStrategy);
+                return;
+            case RepresentableTypeNature.UnknownType
+                when selectedOption == StorageOption.Reference:
+                //consumer attempted to store unknown param in reference container
+                //warn about possible boxing
+                add(Diagnostics.PossibleBoxingStrategy);
+                return;
+            case RepresentableTypeNature.UnknownType
+                when selectedOption == StorageOption.Auto:
+                //consumer attempted to store unknown param in reference container
+                //warn about possible boxing
+                add(Diagnostics.PossibleBoxingStrategy);
+                return;
+            case RepresentableTypeNature.UnknownType
+                when selectedOption == StorageOption.Value:
+                //consumer attempted to store unknown param in value container
+                //warn about Tle
+                add(Diagnostics.TleStrategy);
+                return;
+        }
+
+        void add(Func<Location, String, Diagnostic> factory)
+        {
+            var location = target.TargetDeclaration.GetLocation();
+            var typeName = strategy.FullTypeName;
+            var diagnostic = factory.Invoke(location, typeName);
+            _ = Add(diagnostic);
+        }
+    }
+    internal void DiagnoseValueStorage(StorageStrategy strategy, TargetDataModel target)
+    {
+        /*
+                   | box |value| auto | field
+            struct | rc! | vc  | vc   | cc
+            class  | rc  | rc! | rc   | cc
+            none   | rc! | rc! | rc!  | cc
+
+                   | rc                 | vc    | cc
+            struct | box!               |       | 
+            class  | value!             |       | 
+            none   | box!/auto!/value!  |       | 
+        */
+        var selectedOption = strategy.SelectedOption;
+        var nature = strategy.TypeNature;
+
+        if(nature == RepresentableTypeNature.UnknownType &&
+           selectedOption == StorageOption.Value)
+        {
+            var location = target.TargetDeclaration.GetLocation();
+            var typeName = strategy.FullTypeName;
+            var diagnostic = Diagnostics.PossibleTleStrategy(location, typeName);
+            _ = Add(diagnostic);
+        }
+    }
+    internal void DiagnoseFieldStorage(StorageStrategy _1, TargetDataModel _0)
+    {
+
     }
 
     public DiagnosticsModelBuilder Add(Diagnostic diagnostic)

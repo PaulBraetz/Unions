@@ -18,63 +18,8 @@ public partial class UnionTypeAttribute : IEquatable<UnionTypeAttribute?>
     public UnionTypeAttribute(Object representableTypeSymbolContainer) =>
         _representableTypeSymbolContainer = representableTypeSymbolContainer;
 
-    private String _safeAlias;
-
-    private String? _commentRef;
-    public String CommentRef => _commentRef ??=
-        (RepresentableTypeIsGenericParameter ?
-        $"<typeparamref name=\"{GenericRepresentableTypeName}\"/>" :
-        $"<see cref=\"{RepresentableTypeSymbol?.ToOpenString().Replace('<', '{').Replace('>', '}')}\"/>");
-
-    private String? _openTypeName;
-    public String OpenTypeName => _openTypeName ??=
-        (RepresentableTypeIsGenericParameter ?
-        GenericRepresentableTypeName :
-        RepresentableTypeSymbol?.ToOpenString()) ??
-        throw new InvalidOperationException("Unable to determine representable type name; neither a generic nor a concrete name could be determined.");
-
-    private String? _closedTypeName;
-    public String FullTypeName => _closedTypeName ??=
-        (RepresentableTypeIsGenericParameter ?
-        GenericRepresentableTypeName :
-        RepresentableTypeSymbol?.ToOpenString()) ??
-        throw new InvalidOperationException("Unable to determine representable type name; neither a generic nor a concrete name could be determined.");
-
-    private String? _typeName;
-    public String TypeName => _typeName ??=
-        (RepresentableTypeIsGenericParameter ?
-        GenericRepresentableTypeName :
-        RepresentableTypeSymbol?.Name) ??
-        throw new InvalidOperationException("Unable to determine representable type name; neither a generic nor a concrete name could be determined.");
-
-    public Boolean IsValueType(INamedTypeSymbol target)
-    {
-        if(!RepresentableTypeIsGenericParameter)
-        {
-            return RepresentableTypeSymbol!.IsValueType;
-        }
-
-
-        //TODO: refactor attribute into factory for representablyTypeData model
-        // factory creates target type => essentially decorator with all the util
-    }
-
-    public String GetConvertedInstanceVariableExpression(ITypeSymbol target, String targetType, String instance = "this") =>
-        RepresentableTypeSymbol.IsValueType ?
-        $"Util.UnsafeConvert<{SafeAlias}, {targetType}>({instance}.__valueTypeContainer.{SafeAlias})" :
-        $"(({targetType}){instance}.__referenceTypeContainer)";
-    public String GetInstanceVariableExpression(ITypeSymbol target, String instance = "this") =>
-        RepresentableTypeSymbol.IsValueType ?
-        $"({instance}.__valueTypeContainer.{SafeAlias})" :
-        $"(({RepresentableTypeSymbol.ToFullString()}){instance}.__referenceTypeContainer)";
-    public String TagValueExpression => $"Tag.{SafeAlias}";
-
-    public String SafeAlias => _safeAlias ??=
-        Alias != null && SyntaxFacts.IsValidIdentifier(Alias) ?
-        Alias :
-        RepresentableTypeIsGenericParameter && GenericRepresentableTypeName != null ?
-        GenericRepresentableTypeName :
-        RepresentableTypeSymbol.Name;
+    internal RepresentableTypeData ExtractData(INamedTypeSymbol target) =>
+        RepresentableTypeData.Create(this, target);
 
     public override Boolean Equals(Object? obj) => Equals(obj as UnionTypeAttribute);
     public Boolean Equals(UnionTypeAttribute? other)

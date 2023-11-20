@@ -36,7 +36,7 @@ sealed partial class SourceModelBuilder
             "class";
         _targetNamespace = symbol.ContainingNamespace.IsGlobalNamespace ?
             String.Empty :
-            $"namespace {symbol.ContainingNamespace.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted))};";
+            $"namespace {symbol.ContainingNamespace.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted))}{{";
         _targetAccessibility = SyntaxFacts.GetText(symbol.DeclaredAccessibility);
     }
 
@@ -62,6 +62,14 @@ sealed partial class SourceModelBuilder
         _isInitialized = true;
 
         _nestedTypes = model.SourceText;
+    }
+
+    private String? _valueTypesContainerModel;
+    internal void SetValueTypeContainer(ValueTypeContainerModel model)
+    {
+        _isInitialized = true;
+
+        _valueTypesContainerModel = model.SourceText;
     }
 
     private String? _fields;
@@ -206,7 +214,9 @@ sealed partial class SourceModelBuilder
             .AppendLine("#endregion")
             .AppendLine("}")
             .AppendLine(_containingClassesTail)
-            .AppendLine(ConstantSources.Util);
+            .AppendLine(ConstantSources.Util)
+            .AppendLine("}")
+            .AppendLine(_valueTypesContainerModel);
 
         var source = builder.ToString();
         var formattedSource = CSharpSyntaxTree.ParseText(source)
@@ -216,7 +226,10 @@ sealed partial class SourceModelBuilder
                     .GetText()
                     .ToString();
 
-        var hint = $"{_targetName?.Replace('<', '_').Replace('>', '_') ?? Guid.NewGuid().ToString()}.g.cs";
+        var hint = $"{_targetName?
+            .Replace(", ", "_")
+            .Replace('<', '_')
+            .Replace('>', '_') ?? Guid.NewGuid().ToString()}.g.cs";
 
         var result = new BuiltModel(formattedSource, hint);
 
@@ -246,6 +259,7 @@ sealed partial class SourceModelBuilder
         _containingClassesHead = _containingClassesHead,
         _containingClassesTail = _containingClassesTail,
         _getRepresentedTypeFunction = _getRepresentedTypeFunction,
-        _factoryFunctions = _factoryFunctions
+        _factoryFunctions = _factoryFunctions,
+        _valueTypesContainerModel = _valueTypesContainerModel
     };
 }

@@ -25,9 +25,9 @@ readonly struct ConversionOperatorsModel
 
     private static ConversionOperatorsModel Create(ModelCreationContext context)
     {
-        var parameters = context.Parameters;
-        var omissions = context.Parameters.OperatorOmissions.AllOmissions;
-        var models = parameters.Attributes.AllUnionTypeAttributes
+        var parameters = context.TargetData;
+        var omissions = context.TargetData.OperatorOmissions.AllOmissions;
+        var models = parameters.Annotations.AllRepresentableTypes
             .Where(a => !omissions.Contains(a))
             .Select(attribute => ConversionOperatorModel.Create(attribute, parameters));
 
@@ -43,29 +43,41 @@ readonly struct ConversionOperatorModel
 
     private ConversionOperatorModel(String sourceText) => SourceText = sourceText;
 
-    public static ConversionOperatorModel Create(UnionTypeAttribute attribute, TargetDataModel data)
+    public static ConversionOperatorModel Create(
+        RepresentableTypeData representableType,
+        TargetDataModel data)
     {
         var target = data.TargetSymbol;
-        var allAttributes = data.Attributes.AllUnionTypeAttributes;
+        var allAttributes = data.Annotations.AllRepresentableTypes;
+
+        if(representableType.Attribute.RepresentableTypeIsGenericParameter &&
+           !representableType.Attribute.Options.HasFlag(UnionTypeOptions.SupersetOfParameter))
+        {
+            return new(String.Empty);
+        }
 
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// <summary>")
-            .Append("/// Converts an instance of ").AppendCommentRef(attribute).Append(" to the union type ").AppendCommentRef(data).AppendLine("\"/>.")
+            .Append("/// Converts an instance of ").AppendCommentRef(representableType)
+            .Append(" to the union type ").AppendCommentRef(data).AppendLine("\"/>.")
             .AppendLine("/// </summary>")
             .AppendLine("/// <param name=\"value\">The value to convert.</param>")
             .AppendLine("/// <returns>The converted value.</returns>")
             .Append("public static implicit operator ")
             .AppendOpen(target)
             .Append('(')
-            .AppendFull(attribute)
+            .AppendFull(representableType)
             .AppendLine(" value) => new(value);");
 
-        var generateSolitaryExplicit = allAttributes.Count > 1 || !attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary);
+        var generateSolitaryExplicit =
+            allAttributes.Count > 1 ||
+            !representableType.Attribute.Options.HasFlag(
+                UnionTypeOptions.ImplicitConversionIfSolitary);
         if(generateSolitaryExplicit)
         {
             _ = sourceTextBuilder
                 .Append("public static explicit operator ")
-                .AppendFull(attribute)
+                .AppendFull(representableType)
                 .Append('(')
                 .AppendOpen(target)
                 .Append(" union) => ");
@@ -74,28 +86,30 @@ readonly struct ConversionOperatorModel
             {
                 _ = sourceTextBuilder
                     .Append("union.__tag == Tag.")
-                    .Append(attribute.SafeAlias)
+                    .Append(representableType.Names.SafeAlias)
                     .Append('?');
             }
 
-            _ = sourceTextBuilder.Append(attribute.GetInstanceVariableExpression(target, "union"));
+            _ = sourceTextBuilder.Append(
+                representableType.Storage.GetInstanceVariableExpression("union"));
 
             if(allAttributes.Count > 1)
             {
                 _ = sourceTextBuilder
                     .Append(':')
-                    .Append(ConstantSources.InvalidConversionThrow($"typeof({attribute.RepresentableTypeSymbol.ToFullString()}).Name"));
+                    .Append(ConstantSources.InvalidConversionThrow(
+                        $"typeof({representableType.Names.FullTypeName}).Name"));
             }
 
             _ = sourceTextBuilder.Append(';');
         } else
         {
             _ = sourceTextBuilder.Append("public static implicit operator ")
-                .AppendFull(attribute)
+                .AppendFull(representableType)
                 .Append('(')
                 .AppendOpen(target)
                 .Append(" union) => ")
-                .Append(attribute.GetInstanceVariableExpression(target, "union"))
+                .Append(representableType.Storage.GetInstanceVariableExpression("union"))
                 .AppendLine(";");
         }
 

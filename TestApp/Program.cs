@@ -10,10 +10,11 @@ namespace TestApp
     using System.Collections;
     using RhoMicro.Unions.Abstractions;
     using System.Runtime.InteropServices;
+    using System.ComponentModel;
 
     internal partial class Program
     {
-        private static void Main(String[] _)
+        private static void Main(String[] _0)
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
@@ -21,74 +22,37 @@ namespace TestApp
             {
                 foreach(var t in new[]
                 {
-                    (((Result<Int32>.MyUnionType)0).ToString(), sizeof(Result<Int32>.MyUnionType)),
-                    (((OneOf<Int32, String, IConvertible, List<String>, List<Int32>>)0).ToString(),
-                    sizeof(OneOf<Int32, String, IConvertible, List<String>, List<Int32>>))
+                    (((Union<Stream>)0).ToString(), sizeof(Union<Stream>)),
+                    (new OneOf<Stream>(0).ToString(), sizeof(OneOf<Stream>))
                 })
                 {
                     Console.WriteLine($"sizeof({t.Item1}): {t.Item2}");
                 }
             }
-
-            Result<Int32>.MyUnionType u = 32;
-            Console.WriteLine(u);
-            Console.WriteLine(u.GetRepresentedType());
-            u = "Hello, World!";
-            Console.WriteLine(u);
-            Console.WriteLine(u.GetRepresentedType());
-            IConvertible newHello = "Hello, New World!";
-            u = Result<Int32>.MyUnionType.Create(newHello);
-            Console.WriteLine(u);
-            Console.WriteLine(u.GetRepresentedType());
-
-            var result = GetString();
-            result.Switch(
-                onString: static s => Console.WriteLine(s),
-                onBoolean: static b => Console.WriteLine($"Failed {b}"));
         }
 
-        [UnionType(typeof(String))]
-        [UnionType(typeof(Double))]
+        [UnionType(typeof(IEnumerable<List<String>>))]
+        [UnionType(typeof(Int128))]
         [UnionType(typeof(Int32))]
-        readonly partial struct Stringifyable { }
+        readonly partial struct MyUnion_1 { }
 
-        static String StringifyString(String s) => Stringify(s);
-        static String Stringify(Stringifyable stringifyable)
+        [UnionType(typeof(Int32))]
+        [UnionType(typeof(String))]
+        [UnionType(typeof(List<Int32>))]
+        [UnionType(typeof(List<DateTime>), Alias = "DateList")]
+        [UnionType(nameof(T))]
+        readonly partial struct Union<T>
+            where T : class
         {
-            return stringifyable.Match(
-                s => s,
-                d => d.ToString("0.00"),
-                i => i.ToString());
+
         }
 
-        static ResultUnion GetString() => "Hello, World!";
-
-        [UnionType(typeof(String))]
-        [UnionType(typeof(Boolean))]
-        readonly partial struct ResultUnion { }
-
-        [UnionType(nameof(T))] //setting: box, value, auto
-        /*
-                | box |value| auto | field
-         struct | rc! | vc  | vc   | cc
-         class  | rc  | rc! | rc   | cc
-         none   | rc! | vc! | rc!  | cc
-        */
-        sealed partial class Result<T>
-            where T : struct
+        sealed class OneOf<T> : OneOfBase<Int32, String, List<Int32>, List<DateTime>, T>
+            where T : class
         {
-            T _fieldForT;
-
-            Object _container;
-
-            [StructLayout(LayoutKind.Explicit)]
-            readonly struct Container
+            public OneOf(OneOf<Int32, String, List<Int32>, List<DateTime>, T> input) : base(input)
             {
-                [FieldOffset(0)]
-                public readonly T T;
             }
-
-            static Result<String> Create() => new Result<string>();
         }
     }
 }

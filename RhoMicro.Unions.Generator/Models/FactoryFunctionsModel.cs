@@ -18,16 +18,16 @@ readonly struct FactoryFunctionsModel
 
     private static FactoryFunctionsModel Create(ModelCreationContext context)
     {
-        var attributes = context.Parameters.Attributes.AllUnionTypeAttributes;
-        var target = context.Parameters.TargetSymbol;
+        var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
+        var target = context.TargetData.TargetSymbol;
 
         var sourceText = new StringBuilder()
             .AppendAggregate(
-                attributes,
+                representableTypes,
                 (b, a) => b.AppendLine(
                     $$"""
                     /// </inheritdoc>
-                    public static {{target.ToOpenString()}} Create({{a.RepresentableTypeSymbol.ToFullString()}} value) => new(value);
+                    public static {{target.ToOpenString()}} Create({{a.Names.FullTypeName}} value) => new(value);
                     """))
             .AppendLine("/// </inheritdoc>")
             .Append("public static Boolean TryCreate<")
@@ -38,12 +38,12 @@ readonly struct FactoryFunctionsModel
             .Append(ConstantSources.GenericFactoryIsAsType)
             .Append(")){")
             .AppendAggregate(
-                attributes,
-                (b, a) => b.Append("case Type ").Append(a.SafeAlias).Append("Type when ")
-                .Append(a.SafeAlias).Append("Type == typeof(").AppendFull(a).Append("):")
+                representableTypes,
+                (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
+                .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
                 .AppendLine("instance = new(Util.UnsafeConvert<")
                 .Append(ConstantSources.GenericFactoryIsAsType)
-                .Append(',').AppendFull(a)
+                .Append(',').AppendFull(t)
                 .Append(">(value));return true;"))
             .AppendLine("default: instance = default; return false;}}")
             .AppendLine("/// </inheritdoc>")
@@ -55,12 +55,12 @@ readonly struct FactoryFunctionsModel
             .Append(ConstantSources.GenericFactoryIsAsType)
             .Append(")){")
             .AppendAggregate(
-                attributes,
-                (b, a) => b.Append("case Type ").Append(a.SafeAlias).Append("Type when ")
-                .Append(a.SafeAlias).Append("Type == typeof(").AppendFull(a).Append("):")
+                representableTypes,
+                (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
+                .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
                 .AppendLine("return new(Util.UnsafeConvert<")
             .Append(ConstantSources.GenericFactoryIsAsType)
-            .Append(",").AppendFull(a).Append(">(value));"))
+            .Append(",").AppendFull(t).Append(">(value));"))
             .Append("default: ").Append(ConstantSources.InvalidCreationThrow($"\"{target.ToOpenString()}\"", "value"))
             .AppendLine(";}}")
             .ToString();
