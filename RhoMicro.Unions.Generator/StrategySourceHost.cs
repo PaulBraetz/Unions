@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 
 sealed class StrategySourceHost
@@ -39,20 +40,27 @@ sealed class StrategySourceHost
     private readonly List<Action<StringBuilder>> _valueTypeFieldAdditions = [];
     public void AddValueTypeVontainerInstanceFieldAndCtor(StorageStrategy strategy) =>
         _valueTypeFieldAdditions.Add((s) =>
-            s.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]")
-                .Append("public readonly ").Append(strategy.FullTypeName).Append(' ')
+        {
+            if(!_target.TargetSymbol.IsGenericType)
+            {
+                _ = s.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]");
+            }
+
+            _ = s.Append("public readonly ").Append(strategy.FullTypeName).Append(' ')
                 .Append(strategy.SafeAlias).AppendLine(";")
                 .Append("public ")
                 .Append(_target.ValueTypeContainerName)
                 .Append('(').Append(strategy.FullTypeName)
                 .AppendLine(" value) => ")
-                .Append(strategy.SafeAlias).AppendLine(" = value;"));
+                .Append(strategy.SafeAlias).AppendLine(" = value;");
+        });
+
     public void AppendValueTypeContainerField(StringBuilder sourceTextBuilder)
     {
         if(!_valueTypeContainerTypeRequired)
             return;
         _ = sourceTextBuilder.AppendLine("private readonly ")
-            .Append(_target.FullValueTypeContainerName)
+            .Append(_target.ValueTypeContainerName)
             .Append(" __valueTypeContainer;");
     }
     public void AppendValueTypeContainerType(StringBuilder sourceTextBuilder)
@@ -60,11 +68,13 @@ sealed class StrategySourceHost
         if(!_valueTypeContainerTypeRequired)
             return;
 
+        if(!_target.TargetSymbol.IsGenericType)
+        {
+            _ = sourceTextBuilder.AppendLine(
+                "[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Explicit)]");
+        }
+
         _ = sourceTextBuilder
-                .AppendLine("namespace ")
-                .Append(_target.ValueTypeContainerNamespace)
-                .AppendLine("{")
-                .AppendLine("[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Explicit)]")
                 .AppendLine("internal readonly struct ")
                 .Append(_target.ValueTypeContainerName)
                 .AppendLine("{")
@@ -75,7 +85,6 @@ sealed class StrategySourceHost
                         a.Invoke(b);
                         return b;
                     })
-                .AppendLine("}")
                 .AppendLine("}");
     }
 }

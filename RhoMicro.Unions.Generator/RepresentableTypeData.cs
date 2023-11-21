@@ -55,7 +55,8 @@ sealed class RepresentableTypeData : IEquatable<RepresentableTypeData?>
             names.SafeAlias,
             names.FullTypeName,
             attribute.Storage,
-            nature);
+            nature,
+            target.IsGenericType);
 
         var result = new RepresentableTypeData(
             attribute,

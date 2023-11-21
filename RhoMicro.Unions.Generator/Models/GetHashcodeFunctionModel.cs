@@ -28,20 +28,19 @@ readonly struct GetHashcodeFunctionModel
 
         if(annotations.AllRepresentableTypes.Count > 1)
         {
-            _ = sourceTextBuilder.Append("__tag switch{");
-
-            _ = annotations.AllRepresentableTypes.Where(t => t.Nature == RepresentableTypeNature.ValueType)
-                    .Aggregate(
-                        sourceTextBuilder,
-                        (b, a) => b.Append(a.CorrespondingTag)
-                            .Append(" => ")
-                            .Append(a.Storage.GetGetHashCodeInvocation())
-                            .AppendLine(","))
+            _ = sourceTextBuilder.Append("__tag switch{")
+                .AppendAggregate(
+                    annotations.AllRepresentableTypes,
+                    (b, a) => b.Append(a.CorrespondingTag)
+                        .Append(" => ")
+                        .Append(a.Storage.GetGetHashCodeInvocation())
+                .AppendLine(","))
                 .AppendLine("_ => ").Append(ConstantSources.InvalidTagStateThrow)
                 .Append('}');
-        } else if(annotations.RepresentableValueTypes.Count == 1)
+
+        } else if(annotations.AllRepresentableTypes.Count == 1)
         {
-            var storage = annotations.RepresentableValueTypes[0].Storage;
+            var storage = annotations.AllRepresentableTypes[0].Storage;
             _ = sourceTextBuilder.Append(storage.GetGetHashCodeInvocation());
         }
 

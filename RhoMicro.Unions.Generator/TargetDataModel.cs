@@ -15,19 +15,15 @@ sealed class TargetDataModel : IEquatable<TargetDataModel>
         TypeDeclarationSyntax targetDeclaration,
         SemanticModel semanticModel,
         AnnotationDataModel annotations,
-        OperatorOmissionModel operatorOmissions,
-        String valueTypeContainerName,
-        String valueTypeContainerNamespace)
+        OperatorOmissionModel operatorOmissions)
     {
         TargetSymbol = targetSymbol;
         TargetDeclaration = targetDeclaration;
         SemanticModel = semanticModel;
         Annotations = annotations;
         OperatorOmissions = operatorOmissions;
-        ValueTypeContainerName = valueTypeContainerName;
-        ValueTypeContainerNamespace = valueTypeContainerNamespace;
 
-        FullValueTypeContainerName = $"{ValueTypeContainerNamespace}.{ValueTypeContainerName}";
+        ValueTypeContainerName = $"__{TargetSymbol.ToIdentifierCompatString()}_ValueTypeContainer";
     }
 
     public readonly INamedTypeSymbol TargetSymbol;
@@ -36,8 +32,6 @@ sealed class TargetDataModel : IEquatable<TargetDataModel>
     public readonly AnnotationDataModel Annotations;
     public readonly OperatorOmissionModel OperatorOmissions;
     public readonly String ValueTypeContainerName;
-    public readonly String ValueTypeContainerNamespace;
-    public readonly String FullValueTypeContainerName;
 
     public static TargetDataModel Create(TypeDeclarationSyntax targetDeclaration, SemanticModel semanticModel)
     {
@@ -49,20 +43,12 @@ sealed class TargetDataModel : IEquatable<TargetDataModel>
         var annotations = AnnotationDataModel.Create(targetSymbol);
         var omissions = OperatorOmissionModel.Create(targetSymbol, annotations);
 
-        var namePrefix = targetSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).Replace(", ", "_")
-            .Replace('<', '_')
-            .Replace('>', '_');
-        var valueTypeContainerName = $"{namePrefix}_ValueTypeContainer";
-        var valueTypeContainerNamespace = "RhoMicro.Unions.Generated.Containers";
-
         var result = new TargetDataModel(
             targetSymbol,
             targetDeclaration,
             semanticModel,
             annotations,
-            omissions,
-            valueTypeContainerName,
-            valueTypeContainerNamespace);
+            omissions);
 
         return result;
     }

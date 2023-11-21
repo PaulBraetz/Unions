@@ -13,27 +13,28 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
 {
     public readonly IReadOnlyList<RepresentableTypeData> AllRepresentableTypes;
     public readonly IReadOnlyList<RepresentableTypeData> RepresentableReferenceTypes;
-    public readonly IReadOnlyList<RepresentableTypeData> RepresentableValueTypes;
+    public readonly IReadOnlyList<RepresentableTypeData> RepresentableMixedValueTypes;
+    public readonly IReadOnlyList<RepresentableTypeData> RepresentablePureValueTypes;
+    public readonly IReadOnlyList<RepresentableTypeData> AllRepresentableValueTypes;
     public readonly IReadOnlyList<RepresentableTypeData> RepresentableUnknownTypes;
     public readonly UnionTypeSettingsAttribute Settings;
-
-    public Boolean HasReferenceTypes => RepresentableReferenceTypes.Count > 0;
-    public Boolean HasValueTypes => RepresentableValueTypes.Count > 0;
-    public Boolean HasUnknownTypes => RepresentableUnknownTypes.Count > 0;
-    public Boolean HasTypes => AllRepresentableTypes.Count > 0;
 
     private AnnotationDataModel(
         UnionTypeSettingsAttribute settings,
         IReadOnlyList<RepresentableTypeData> allRepresentableTypes,
         IReadOnlyList<RepresentableTypeData> representableReferenceTypes,
-        IReadOnlyList<RepresentableTypeData> representableValueTypes,
-        IReadOnlyList<RepresentableTypeData> representableUnknownTypes)
+        IReadOnlyList<RepresentableTypeData> representableUnknownTypes,
+        IReadOnlyList<RepresentableTypeData> representablePureValueTypes,
+        IReadOnlyList<RepresentableTypeData> representableMixedValueTypes)
     {
         Settings = settings;
         AllRepresentableTypes = allRepresentableTypes;
         RepresentableReferenceTypes = representableReferenceTypes;
-        RepresentableValueTypes = representableValueTypes;
         RepresentableUnknownTypes = representableUnknownTypes;
+        RepresentablePureValueTypes = representablePureValueTypes;
+        RepresentableMixedValueTypes = representableMixedValueTypes;
+
+        AllRepresentableValueTypes = RepresentablePureValueTypes.Concat(RepresentableMixedValueTypes).ToList();
     }
 
     public static AnnotationDataModel Create(INamedTypeSymbol target)
@@ -44,13 +45,12 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
         var orderedRepresentableTypes = attributes
             .OfUnionTypeAttribute()
             .Select(a => a.ExtractData(target))
-            .GroupBy(a => a.Nature)
+            .GroupBy(a => a.Nature == RepresentableTypeNature.UnknownType)
             .OrderBy(g => g.Key) //generic params come last
             .Select(g =>
-                g.Key == RepresentableTypeNature.UnknownType ?
-                g.OrderBy(a => a.Names.SimpleTypeName) :
-                g.OrderBy(a => a.Nature == RepresentableTypeNature.ValueType) //reference types come first, bang here bc !RepresentableTypeIsGenericParameter
-                 .ThenBy(a => a.Names.FullTypeName))
+                g.Key ?
+                g.OrderBy(a => a.Names.FullTypeName) :
+                g.OrderBy(a => a.Names.FullTypeName))
             .SelectMany(g => g);
 
         // reference types
@@ -59,7 +59,8 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
 
         List<RepresentableTypeData> allRepresentableTypes = [];
         List<RepresentableTypeData> representableReferenceTypes = [];
-        List<RepresentableTypeData> representableValueTypes = [];
+        List<RepresentableTypeData> representableMixedValueTypes = [];
+        List<RepresentableTypeData> representablePureValueTypes = [];
         List<RepresentableTypeData> representableUnknownTypes = [];
 
         foreach(var representableType in orderedRepresentableTypes)
@@ -67,9 +68,11 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
             (representableType.Nature switch
             {
                 RepresentableTypeNature.ReferenceType => representableReferenceTypes,
-                RepresentableTypeNature.ValueType => representableValueTypes,
+                RepresentableTypeNature.PureValueType => representablePureValueTypes,
+                RepresentableTypeNature.ImpureValueType => representableMixedValueTypes,
                 _ => representableUnknownTypes
             }).Add(representableType);
+
             allRepresentableTypes.Add(representableType);
         }
 
@@ -78,11 +81,12 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
             new UnionTypeSettingsAttribute();
 
         var result = new AnnotationDataModel(
-            settings,
-            allRepresentableTypes,
-            representableReferenceTypes,
-            representableValueTypes,
-            representableUnknownTypes);
+            settings: settings,
+            allRepresentableTypes: allRepresentableTypes,
+            representableReferenceTypes: representableReferenceTypes,
+            representablePureValueTypes: representablePureValueTypes,
+            representableMixedValueTypes: representableMixedValueTypes,
+            representableUnknownTypes: representableUnknownTypes);
 
         return result;
     }

@@ -13,25 +13,28 @@ using System.Linq;
 enum RepresentableTypeNature
 {
     ReferenceType,
-    ValueType,
+    ImpureValueType,
+    PureValueType,
     UnknownType
 }
 static class RepresentableTypeNatureFactory
 {
     public static RepresentableTypeNature Create(UnionTypeAttribute attribute, INamedTypeSymbol target)
     {
-        var isValueType = (attribute.RepresentableTypeIsGenericParameter ?
-            target.TypeParameters.SingleOrDefault(p => p.Name == attribute.GenericRepresentableTypeName)?.IsValueType :
-            attribute.RepresentableTypeSymbol?.IsValueType) ??
-            false;
-        if(isValueType)
-            return RepresentableTypeNature.ValueType;
+        var representedSymbol = attribute.RepresentableTypeIsGenericParameter ?
+            target.TypeParameters.SingleOrDefault(p => p.Name == attribute.GenericRepresentableTypeName) :
+            attribute.RepresentableTypeSymbol;
 
-        var isReferenceType = (attribute.RepresentableTypeIsGenericParameter ?
-            target.TypeParameters.SingleOrDefault(p => p.Name == attribute.GenericRepresentableTypeName)?.IsReferenceType :
-            attribute.RepresentableTypeSymbol?.IsReferenceType) ??
-            false;
-        if(isReferenceType)
+        if(representedSymbol == null)
+            return RepresentableTypeNature.UnknownType;
+
+        if(representedSymbol.IsPureValueType())
+            return RepresentableTypeNature.PureValueType;
+
+        if(representedSymbol.IsValueType)
+            return RepresentableTypeNature.ImpureValueType;
+
+        if(representedSymbol.IsReferenceType)
             return RepresentableTypeNature.ReferenceType;
 
         return RepresentableTypeNature.UnknownType;

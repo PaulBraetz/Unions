@@ -26,7 +26,8 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
         var target = context.TargetData.TargetSymbol;
         var attributes = context.TargetData.Annotations.AllRepresentableTypes;
 
-        var sourceTextBuilder = new StringBuilder("#nullable enable")
+        var sourceTextBuilder = new StringBuilder()
+            .AppendLine("#nullable enable")
             .AppendLine("/// <summary>")
             .AppendLine("/// Returns a string representation of the current instance.")
             .AppendLine("/// </summary>")

@@ -12,7 +12,9 @@ abstract partial class StorageStrategy
         String safeAlias,
         String fullTypeName,
         StorageOption selectedOption,
-        RepresentableTypeNature typeNature) : StorageStrategy(safeAlias, fullTypeName, selectedOption, typeNature)
+        RepresentableTypeNature typeNature,
+        StorageSelectionViolation violation)
+        : StorageStrategy(safeAlias, fullTypeName, selectedOption, typeNature, violation)
     {
         public override String GetConvertedInstanceVariableExpression(String targetType, String instance = "this") =>
             $"(({targetType}){instance}.__referenceTypeContainer)";
@@ -21,7 +23,5 @@ abstract partial class StorageStrategy
         public override String GetInstanceVariableAssignmentExpression(String valueExpression, String instance = "this") =>
             $"{instance}.__referenceTypeContainer = {valueExpression}";
         public override void Visit(StrategySourceHost host) => host.AddReferenceTypeContainerField();
-        public override void Visit(DiagnosticsModelBuilder diagnostics, TargetDataModel target) =>
-            diagnostics.DiagnoseReferenceStorage(this, target);
     }
 }

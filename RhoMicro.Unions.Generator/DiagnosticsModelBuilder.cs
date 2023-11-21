@@ -11,46 +11,10 @@ using System.Threading;
 using RhoMicro.Unions;
 using System.Reflection;
 using System.Linq.Expressions;
-using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 
-sealed class DiagnosticsModelBuilder
+sealed partial class DiagnosticsModelBuilder
 {
-    public sealed class Model
-    {
-        public Model(IEnumerable<Diagnostic> diagnostics)
-        {
-            _diagnostics = diagnostics;
-            IsError = diagnostics.Any(Extensions.IsError);
-        }
-        private Model(Boolean isError)
-        {
-            _diagnostics = Array.Empty<Diagnostic>();
-            IsError = isError;
-        }
-
-        public readonly static Model Error = new(isError: true);
-        public readonly static Model NoError = new(isError: false);
-
-        public readonly Boolean IsError;
-        private readonly IEnumerable<Diagnostic> _diagnostics;
-
-        public void AddToContext(SyntaxNodeAnalysisContext context)
-        {
-            foreach(var diagnostic in _diagnostics)
-            {
-                context.ReportDiagnostic(diagnostic);
-            }
-        }
-        public void AddToContext(SourceProductionContext context)
-        {
-            foreach(var diagnostic in _diagnostics)
-            {
-                context.ReportDiagnostic(diagnostic);
-            }
-        }
-    }
-
     private readonly ICollection<Diagnostic> _diagnostics = new List<Diagnostic>();
     private readonly Object _syncRoot = new();
 
@@ -76,6 +40,45 @@ sealed class DiagnosticsModelBuilder
     }
 
     #region Auto Diagnosers
+    private void DiagnoseStorageSelectionViolations(TargetDataModel model)
+    {
+        var violations = model.Annotations.AllRepresentableValueTypes
+            .Where(d => d.Storage.Violation != StorageSelectionViolation.None);
+
+        if(!violations.Any())
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+        foreach(var violation in violations)
+        {
+            var name = violation.Names.FullTypeName;
+            var diagnostic = (violation.Storage.Violation switch
+            {
+                StorageSelectionViolation.PureValueReferenceSelection =>
+                    (Func<Location, String, Diagnostic>)Diagnostics.BoxingStrategy,
+                StorageSelectionViolation.PureValueValueSelectionGeneric =>
+                    Diagnostics.GenericViolationStrategy,
+                StorageSelectionViolation.ImpureValueReference =>
+                    Diagnostics.BoxingStrategy,
+                StorageSelectionViolation.ImpureValueValue =>
+                    Diagnostics.TleStrategy,
+                StorageSelectionViolation.ReferenceValue =>
+                    Diagnostics.TleStrategy,
+                StorageSelectionViolation.UnknownReference =>
+                    Diagnostics.PossibleBoxingStrategy,
+                StorageSelectionViolation.UnknownValue =>
+                    Diagnostics.PossibleTleStrategy,
+                _ => null
+            })?.Invoke(location, name);
+
+            if(diagnostic != null)
+            {
+                _ = Add(diagnostic);
+            }
+        }
+    }
     private void DiagnoseSmallGenericUnion(TargetDataModel model)
     {
         if(!model.TargetSymbol.IsGenericType ||
@@ -88,8 +91,6 @@ sealed class DiagnosticsModelBuilder
         var diagnostic = Diagnostics.SmallGenericUnion(location);
         _ = Add(diagnostic);
     }
-    private void DiagnoseContainerStrategies(TargetDataModel model) =>
-        model.Annotations.AllRepresentableTypes.ForEach(t => t.Storage.Visit(this, model));
     private void DiagnoseUnknownGenericParameterName(TargetDataModel model)
     {
         var available = model.TargetSymbol.TypeParameters
@@ -313,94 +314,6 @@ sealed class DiagnosticsModelBuilder
             d.Invoke(this, parameters, token);
 
         return this;
-    }
-
-    internal void DiagnoseReferenceStorage(StorageStrategy strategy, TargetDataModel target)
-    {
-        /*
-                   | box |value| auto | field
-            struct | rc! | vc  | vc   | cc
-            class  | rc  | rc! | rc   | cc
-            none   | rc! | rc! | rc!  | cc
-
-                   | rc         | vc    | cc
-            struct | box!       |       | 
-            class  | value!     |       | 
-            none   | box!/auto! | value!| 
-        */
-        var selectedOption = strategy.SelectedOption;
-        var nature = strategy.TypeNature;
-
-        switch(nature)
-        {
-            case RepresentableTypeNature.ValueType
-                when selectedOption == StorageOption.Reference:
-                //consumer attempted to store value type in reference container
-                //warn about boxing
-                add(Diagnostics.BoxingStrategy);
-                return;
-            case RepresentableTypeNature.ReferenceType
-                when selectedOption == StorageOption.Value:
-                //consumer attempted to store reference value in value container
-                //warn about ignored option due to guaranteed TLE
-                add(Diagnostics.TleStrategy);
-                return;
-            case RepresentableTypeNature.UnknownType
-                when selectedOption == StorageOption.Reference:
-                //consumer attempted to store unknown param in reference container
-                //warn about possible boxing
-                add(Diagnostics.PossibleBoxingStrategy);
-                return;
-            case RepresentableTypeNature.UnknownType
-                when selectedOption == StorageOption.Auto:
-                //consumer attempted to store unknown param in reference container
-                //warn about possible boxing
-                add(Diagnostics.PossibleBoxingStrategy);
-                return;
-            case RepresentableTypeNature.UnknownType
-                when selectedOption == StorageOption.Value:
-                //consumer attempted to store unknown param in value container
-                //warn about Tle
-                add(Diagnostics.TleStrategy);
-                return;
-        }
-
-        void add(Func<Location, String, Diagnostic> factory)
-        {
-            var location = target.TargetDeclaration.GetLocation();
-            var typeName = strategy.FullTypeName;
-            var diagnostic = factory.Invoke(location, typeName);
-            _ = Add(diagnostic);
-        }
-    }
-    internal void DiagnoseValueStorage(StorageStrategy strategy, TargetDataModel target)
-    {
-        /*
-                   | box |value| auto | field
-            struct | rc! | vc  | vc   | cc
-            class  | rc  | rc! | rc   | cc
-            none   | rc! | rc! | rc!  | cc
-
-                   | rc                 | vc    | cc
-            struct | box!               |       | 
-            class  | value!             |       | 
-            none   | box!/auto!/value!  |       | 
-        */
-        var selectedOption = strategy.SelectedOption;
-        var nature = strategy.TypeNature;
-
-        if(nature == RepresentableTypeNature.UnknownType &&
-           selectedOption == StorageOption.Value)
-        {
-            var location = target.TargetDeclaration.GetLocation();
-            var typeName = strategy.FullTypeName;
-            var diagnostic = Diagnostics.PossibleTleStrategy(location, typeName);
-            _ = Add(diagnostic);
-        }
-    }
-    internal void DiagnoseFieldStorage(StorageStrategy _1, TargetDataModel _0)
-    {
-
     }
 
     public DiagnosticsModelBuilder Add(Diagnostic diagnostic)

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -23,6 +24,70 @@ internal static partial class Extensions
         }
     }
 
+    private static readonly IDictionary<ITypeSymbol, Boolean?> _valueTypeCache =
+        new Dictionary<ITypeSymbol, Boolean?>(SymbolEqualityComparer.Default);
+    public static Boolean IsPureValueType(this ITypeSymbol symbol)
+    {
+        evaluate(symbol);
+
+        if(!_valueTypeCache[symbol].HasValue)
+        {
+            throw new Exception($"Unable to determine whether {symbol.Name} is value type.");
+        }
+
+        var result = _valueTypeCache[symbol]!.Value;
+
+        return result;
+
+        static void evaluate(ITypeSymbol symbol)
+        {
+            if(_valueTypeCache.TryGetValue(symbol, out var currentResult))
+            {
+                //cache could be initialized but undefined (null)
+                if(currentResult.HasValue)
+                {
+                    //cache was not null
+                    return;
+                }
+            } else
+            {
+                //initialize cache for type
+                _valueTypeCache[symbol] = null;
+            }
+
+            if(!symbol.IsValueType)
+            {
+                _valueTypeCache[symbol] = false;
+                return;
+            }
+
+            var members = symbol.GetMembers();
+            foreach(var member in members)
+            {
+                if(member is IFieldSymbol field)
+                {
+                    //is field type uninitialized in cache?
+                    if(!_valueTypeCache.ContainsKey(field.Type))
+                    {
+                        //initialize & define
+                        evaluate(field.Type);
+                    }
+
+                    var fieldTypeIsValueType = _valueTypeCache[field.Type];
+                    if(fieldTypeIsValueType.HasValue && !fieldTypeIsValueType.Value)
+                    {
+                        //field type was initialized but found not to be value type
+                        //apply transitive property
+                        _valueTypeCache[symbol] = false;
+                        return;
+                    }
+                }
+            }
+
+            //no issues found :)
+            _valueTypeCache[symbol] = true;
+        }
+    }
     public static IncrementalValuesProvider<SourceCarry<TResult>> SelectCarry<TSource, TResult>(
         this IncrementalValuesProvider<SourceCarry<TSource>> provider,
         Func<TSource, DiagnosticsModelBuilder, SourceModelBuilder, CancellationToken, TResult> project) =>
@@ -59,6 +124,8 @@ internal static partial class Extensions
         symbol.GetAttributes().OfUnionTypeAttribute().Any();
     public static String ToDocCompatString(this ITypeSymbol symbol) =>
         symbol.ToFullString().Replace("<", "&lt;").Replace(">", "&gt;");
+    public static String ToIdentifierCompatString(this ITypeSymbol symbol) =>
+        symbol.ToOpenString().Replace('<', '_').Replace('>', '_');
     public static String ToOpenString(this ISymbol symbol) =>
         symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat
             .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));

@@ -186,7 +186,8 @@ sealed partial class SourceModelBuilder
             .Append(_targetAccessibility).Append(" partial ").Append(_targetStructOrClass).Append(' ').AppendLine(_targetName).AppendLine(_interfaceImplementation)
             .Append('{')
             .AppendLine("#region Nested Types")
-            .Append(_nestedTypes)
+            .AppendLine(_nestedTypes)
+            .AppendLine(_valueTypesContainerModel)
             .AppendLine("#endregion")
             .AppendLine("#region Constructors")
             .Append(_constructors)
@@ -215,8 +216,7 @@ sealed partial class SourceModelBuilder
             .AppendLine("}")
             .AppendLine(_containingClassesTail)
             .AppendLine(ConstantSources.Util)
-            .AppendLine("}")
-            .AppendLine(_valueTypesContainerModel);
+            .AppendLine("}");
 
         var source = builder.ToString();
         var formattedSource = CSharpSyntaxTree.ParseText(source)

@@ -127,7 +127,7 @@
     <value>Boxing will occur for the representable type {0}. Consider using a different storage option.</value>
   </data>
   <data name="BoxingStrategy_Title" xml:space="preserve">
-    <value>Boxing Strategy Detected</value>
+    <value>Boxing Storage Detected</value>
   </data>
   <data name="DuplicateUnionTypeAttributes_Message" xml:space="preserve">
     <value>Union types may not be declared using duplicate 'UnionType' attributes of the same representable type ({0}).</value>
@@ -140,6 +140,12 @@
   </data>
   <data name="GeneratorException_Title" xml:space="preserve">
     <value>Unexpected Generator Error</value>
+  </data>
+  <data name="GenericViolationStrategy_Message" xml:space="preserve">
+    <value>The selected storage option for {0} was ignored because the target union type is generic.</value>
+  </data>
+  <data name="GenericViolationStrategy_Title" xml:space="preserve">
+    <value>Generic Storage Violation Detected</value>
   </data>
   <data name="ImplicitConversionOptionOnNonSolitary_Message" xml:space="preserve">
     <value>The `ImplicitConversionIfSolitary` option will be ignored because the target union type may represent more than one type.</value>
@@ -175,10 +181,10 @@
     <value>Boxing may occur for the representable type {0}. Consider constraining it to either `class` or `struct` in order to help the generator emit an efficient implementation. Alternatively, use the `StorageOption.Field` option to generate dedicated field for the type.</value>
   </data>
   <data name="PossibleBoxingStrategy_Title" xml:space="preserve">
-    <value>Possible Boxing Strategy Detected</value>
+    <value>Possible Boxing Storage Detected</value>
   </data>
   <data name="PossibleTleStrategy_Message" xml:space="preserve">
-    <value>Binding a reference type to the representable type {0} will cause a `TypeLoadException` to be thrown. Consider constraining the parameter or using a different storage option.</value>
+    <value>The selected storage option for {0} was ignored because it could cause a `TypeLoadException` to be thrown.</value>
   </data>
   <data name="PossibleTleStrategy_Title" xml:space="preserve">
     <value>Possible TypeLoadException Detected</value>

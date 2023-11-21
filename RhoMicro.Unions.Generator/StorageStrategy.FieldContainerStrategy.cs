@@ -11,11 +11,12 @@ abstract partial class StorageStrategy
     sealed class FieldContainerStrategy : StorageStrategy
     {
         public FieldContainerStrategy(
-            String safeAlias,
-            String fullTypeName,
-            StorageOption selectedOption,
-            RepresentableTypeNature typeNature)
-            : base(safeAlias, fullTypeName, selectedOption, typeNature) =>
+        String safeAlias,
+        String fullTypeName,
+        StorageOption selectedOption,
+        RepresentableTypeNature typeNature,
+        StorageSelectionViolation violation)
+        : base(safeAlias, fullTypeName, selectedOption, typeNature, violation) =>
             _fieldName = SafeAlias.ToGeneratedCamelCase();
 
         private readonly String _fieldName;
@@ -28,7 +29,5 @@ abstract partial class StorageStrategy
             $"{instance}.{_fieldName} = {valueExpression}";
 
         public override void Visit(StrategySourceHost host) => host.AddDedicatedField(this);
-        public override void Visit(DiagnosticsModelBuilder diagnostics, TargetDataModel target) =>
-            diagnostics.DiagnoseFieldStorage(this, target);
     }
 }

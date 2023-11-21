@@ -1,8 +1,10 @@
 #pragma warning disable IDE0210 // Convert to top-level statements
 #pragma warning disable IDE0161 // Convert to file-scoped namespace
 
-namespace TestApp
+namespace TestApp.MoreNames.Models
 {
+    using RhoMicro.Unions;
+
     using RhoMicro.Unions;
     using OneOf;
     using System.Globalization;
@@ -16,43 +18,42 @@ namespace TestApp
     {
         private static void Main(String[] _0)
         {
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-
-            unsafe
+            for(var i = 0; i < 100; i++)
             {
-                foreach(var t in new[]
-                {
-                    (((Union<Stream>)0).ToString(), sizeof(Union<Stream>)),
-                    (new OneOf<Stream>(0).ToString(), sizeof(OneOf<Stream>))
-                })
-                {
-                    Console.WriteLine($"sizeof({t.Item1}): {t.Item2}");
-                }
+                Foo().Switch(
+                e => Console.WriteLine(e),
+                r => Console.WriteLine(r),
+                u => Console.WriteLine(u));
             }
         }
 
-        [UnionType(typeof(IEnumerable<List<String>>))]
-        [UnionType(typeof(Int128))]
-        [UnionType(typeof(Int32))]
-        readonly partial struct MyUnion_1 { }
-
-        [UnionType(typeof(Int32))]
-        [UnionType(typeof(String))]
-        [UnionType(typeof(List<Int32>))]
-        [UnionType(typeof(List<DateTime>), Alias = "DateList")]
-        [UnionType(nameof(T))]
-        readonly partial struct Union<T>
-            where T : class
+        static ApiResult Foo()
         {
-
-        }
-
-        sealed class OneOf<T> : OneOfBase<Int32, String, List<Int32>, List<DateTime>, T>
-            where T : class
-        {
-            public OneOf(OneOf<Int32, String, List<Int32>, List<DateTime>, T> input) : base(input)
+            var value = (Int32)(Random.Shared.NextDouble() * 3);
+            var result = value switch
             {
-            }
+                0 => (ApiResult)new Result("Yay, Success!"),
+                1 => (ApiResult)new Error(value, "Nay, Error!"),
+                _ => (ApiResult)new Unknown(),
+            };
+            return result;
         }
+
+        [UnionType(typeof(Result))]
+        [UnionType(typeof(Error))]
+        [UnionType(typeof(Unknown))]
+        readonly partial struct ApiResult;
+
+        readonly record struct Unknown;
+        readonly record struct Result(String Value);
+        readonly record struct Error(Int32 Code, String Message);
     }
+
+    [UnionType(typeof(Int32))]
+    [UnionType(typeof(String))]
+    [UnionType(typeof(FooMix))]
+    partial class TestUnion;
+
+    record struct Foo(TimeSpan Bar);
+    record struct FooMix(DateTime Bar, Foo Foo, String Int);
 }

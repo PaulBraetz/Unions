@@ -31,8 +31,15 @@ internal static partial class Diagnostics
         BoxingStrategy = 18,
         PossibleTleStrategy = 19,
         TleStrategy = 20,
-        SmallGenericUnion = 21
+        SmallGenericUnion = 21,
+        GenericViolationStrategy = 22
     }
+    public static Diagnostic GenericViolationStrategy(Location location, String typeName) =>
+        Create(
+            Id.PossibleBoxingStrategy,
+            location,
+            DiagnosticSeverity.Warning,
+            typeName);
     public static Diagnostic SmallGenericUnion(Location location) =>
         Create(
             Id.SmallGenericUnion,
@@ -166,7 +173,7 @@ internal static partial class Diagnostics
             location,
             messageArgs);
 
-    static LocalizableString GetLocalized(String name) =>
+    static LocalizableResourceString GetLocalized(String name) =>
         String.IsNullOrEmpty(Resources.Diagnostics.ResourceManager.GetString(name)) ?
             throw new ArgumentException($"No resource with name {name} could be located.", nameof(name)) :
             new LocalizableResourceString(
