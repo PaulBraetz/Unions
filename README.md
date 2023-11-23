@@ -1,5 +1,31 @@
 # Unions
 
+Read about union types here: https://en.wikipedia.org/wiki/Union_type
+Alternative union type implementations: 
+- [OneOf](https://github.com/mcintyre321/OneOf)
+- [ValueVariant](https://github.com/hikarin522/ValueVariant)
+- [DiscriminatedUnion](https://github.com/sdedalus/DiscriminatedUnion)
+- [CSharpDiscriminatedUnion](https://github.com/Galad/CSharpDiscriminatedUnion)
+- [UnionType](https://github.com/Cricle/UnionType)
+- [Funcky Discriminated Union](https://github.com/polyadic/funcky-discriminated-union)
+- [N.SourceGenerators.UnionTypes](https://github.com/Ne4to/N.SourceGenerators.UnionTypes)
+
+## Installation
+
+Requirements: `net7` (due to `static abstract` members)
+
+Package Reference:
+```
+<PackageReference Include="RhoMicro.Unions" Version="0.0.0-alpha.11">
+  <PrivateAssets>all</PrivateAssets>
+  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+</PackageReference>
+```
+CLI:
+```
+dotnet add package RhoMicro.Unions
+```
+
 ## Contrived Example
 
 In our imaginary usecase, a user shall be retrieved from the infrastructure via a name query. The following types will be found throughout the example:
