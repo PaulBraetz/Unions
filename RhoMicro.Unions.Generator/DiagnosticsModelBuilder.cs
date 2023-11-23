@@ -42,7 +42,7 @@ sealed partial class DiagnosticsModelBuilder
     #region Auto Diagnosers
     private void DiagnoseStorageSelectionViolations(TargetDataModel model)
     {
-        var violations = model.Annotations.AllRepresentableValueTypes
+        var violations = model.Annotations.AllRepresentableTypes
             .Where(d => d.Storage.Violation != StorageSelectionViolation.None);
 
         if(!violations.Any())

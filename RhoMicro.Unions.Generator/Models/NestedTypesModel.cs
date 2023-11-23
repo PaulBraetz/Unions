@@ -28,7 +28,9 @@ readonly struct NestedTypesModel
 
         if(representableTypes.Count > 1)
         {
-            _ = sourceTextBuilder.Append("private enum Tag : Byte {")
+            _ = sourceTextBuilder
+                .AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]")
+                .AppendLine("private enum Tag : Byte {")
                 .AppendJoin(',', representableTypes.Select(a => a.Names.SafeAlias))
                 .Append('}');
         }

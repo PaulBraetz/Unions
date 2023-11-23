@@ -23,8 +23,9 @@ readonly struct DownCastFunctionModel
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
         var target = context.TargetData.TargetSymbol;
 
-        var sourceTextBuilder = new StringBuilder("public")
-            .Append(' ')
+        var sourceTextBuilder = new StringBuilder()
+            .AppendLine("/// </inheritdoc>")
+            .Append("public ")
             .Append(ConstantSources.GenericTResultType)
             .Append(" DownCast<")
             .Append(ConstantSources.GenericTResultType)

@@ -22,7 +22,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.2</Version>
+		<Version>0.0.0-alpha.12</Version>
 		<PackageId>RhoMicro.Unions</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
@@ -34,8 +34,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<!--'.0' required for auto source gen updater-->
-		<AssemblyName>$(MSBuildProjectName).372</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 
@@ -66,21 +65,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Resources\Diagnostics.en.Designer.cs">
-	    <DependentUpon>Diagnostics.en.resx</DependentUpon>
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	  </Compile>
+	  <None Remove="bin\Debug\netstandard2.0\\RhoMicro.Unions.Generator.dll" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Update="Resources\Diagnostics.en.resx">
-	    <SubType>Designer</SubType>
-	    <LastGenOutput>Diagnostics.en.Designer.cs</LastGenOutput>
-	    <Generator>ResXFileCodeGenerator</Generator>
-	  </EmbeddedResource>
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
-
-	<!--Required for source gen auto updater-->
-	<!--AutoUpdateAssemblyName-->
 </Project>

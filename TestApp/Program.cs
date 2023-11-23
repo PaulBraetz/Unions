@@ -1,59 +1,44 @@
-#pragma warning disable IDE0210 // Convert to top-level statements
-#pragma warning disable IDE0161 // Convert to file-scoped namespace
+using RhoMicro.Unions;
 
-namespace TestApp.MoreNames.Models
+using System.ComponentModel;
+
+internal class Program
 {
-    using RhoMicro.Unions;
-
-    using RhoMicro.Unions;
-    using OneOf;
-    using System.Globalization;
-    using System.Numerics;
-    using System.Collections;
-    using RhoMicro.Unions.Abstractions;
-    using System.Runtime.InteropServices;
-    using System.ComponentModel;
-
-    internal partial class Program
+    private static void Main(String[] _)
     {
-        private static void Main(String[] _0)
+        Union u = DateTime.Now;
+        //Output: Union(<DateTime> | Double | String){23/11/2023 17:58:58}
+        Console.WriteLine(u);
+        var eu = u.DownCast<EquivalentUnion>();
+        //Output: EquivalentUnion(<DateTime> | Double | String){23/11/2023 17:58:58}
+        Console.WriteLine(eu);
+
+        var r = Result<String>.CreateFromResult("Hello, World!");
+        if(r.IsErrorMessage)
         {
-            for(var i = 0; i < 100; i++)
-            {
-                Foo().Switch(
-                e => Console.WriteLine(e),
-                r => Console.WriteLine(r),
-                u => Console.WriteLine(u));
-            }
+            //handle error
+        } else if(r.IsResult)
+        {
+            //handle result
         }
 
-        static ApiResult Foo()
-        {
-            var value = (Int32)(Random.Shared.NextDouble() * 3);
-            var result = value switch
-            {
-                0 => (ApiResult)new Result("Yay, Success!"),
-                1 => (ApiResult)new Error(value, "Nay, Error!"),
-                _ => (ApiResult)new Unknown(),
-            };
-            return result;
-        }
-
-        [UnionType(typeof(Result))]
-        [UnionType(typeof(Error))]
-        [UnionType(typeof(Unknown))]
-        readonly partial struct ApiResult;
-
-        readonly record struct Unknown;
-        readonly record struct Result(String Value);
-        readonly record struct Error(Int32 Code, String Message);
+        //alternatively:
+        r.Switch(
+            onErrorMessage: m =>/*handle error*/,
+            onResult: r =>/*handle result*/);
     }
-
-    [UnionType(typeof(Int32))]
-    [UnionType(typeof(String))]
-    [UnionType(typeof(FooMix))]
-    partial class TestUnion;
-
-    record struct Foo(TimeSpan Bar);
-    record struct FooMix(DateTime Bar, Foo Foo, String Int);
 }
+
+[UnionType(typeof(String), Alias = "ErrorMessage")]
+[UnionType(nameof(T), Alias = "Result")]
+readonly partial struct Result<T>;
+
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
+readonly partial struct Union;
+
+[UnionType(typeof(Double))]
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+sealed partial class EquivalentUnion;

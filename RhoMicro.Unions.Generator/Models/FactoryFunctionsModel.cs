@@ -28,6 +28,10 @@ readonly struct FactoryFunctionsModel
                     $$"""
                     /// </inheritdoc>
                     public static {{target.ToOpenString()}} Create({{a.Names.FullTypeName}} value) => new(value);
+                    /// <summary>
+                    /// Creates a new instance of <see cref="{{target.ToDocCompatString()}}"/>.
+                    /// </summary>
+                    public static {{target.ToOpenString()}} CreateFrom{{a.Names.SafeAlias}}({{a.Names.FullTypeName}} value) => new(value);
                     """))
             .AppendLine("/// </inheritdoc>")
             .Append("public static Boolean TryCreate<")

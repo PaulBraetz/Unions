@@ -34,7 +34,7 @@ readonly struct FieldsModel
         host.AppendReferenceTypeContainerField(sourceTextBuilder);
 
         if(representableTypes.Count > 1)
-            _ = sourceTextBuilder.Append("private readonly Tag __tag;");
+            _ = sourceTextBuilder.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]").Append("private readonly Tag __tag;");
 
         host.AppendValueTypeContainerField(sourceTextBuilder);
         host.AppendDedicatedFields(sourceTextBuilder);

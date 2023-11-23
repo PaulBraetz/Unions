@@ -14,6 +14,8 @@ sealed partial class SourceModelBuilder
 {
     private Boolean _isInitialized;
 
+    private String? _hint;
+
     private String? _targetName;
     private String? _targetStructOrClass;
     private String? _targetNamespace;
@@ -24,6 +26,8 @@ sealed partial class SourceModelBuilder
     public void SetTarget(INamedTypeSymbol symbol)
     {
         _isInitialized = true;
+
+        _hint = $"{symbol.ToHintName()}.g.cs";
 
         _containingClassesHead = symbol.GetContainingClassHead();
         _containingClassesTail = symbol.GetContainingClassTail();
@@ -216,7 +220,7 @@ sealed partial class SourceModelBuilder
             .AppendLine("}")
             .AppendLine(_containingClassesTail)
             .AppendLine(ConstantSources.Util)
-            .AppendLine("}");
+            .AppendLine(String.IsNullOrEmpty(_targetNamespace) ? "" : "}");
 
         var source = builder.ToString();
         var formattedSource = CSharpSyntaxTree.ParseText(source)
@@ -226,11 +230,7 @@ sealed partial class SourceModelBuilder
                     .GetText()
                     .ToString();
 
-        var hint = $"{_targetName?
-            .Replace(", ", "_")
-            .Replace('<', '_')
-            .Replace('>', '_') ?? Guid.NewGuid().ToString()}.g.cs";
-
+        var hint = _hint ?? Guid.NewGuid().ToString();
         var result = new BuiltModel(formattedSource, hint);
 
         return result;
@@ -260,6 +260,7 @@ sealed partial class SourceModelBuilder
         _containingClassesTail = _containingClassesTail,
         _getRepresentedTypeFunction = _getRepresentedTypeFunction,
         _factoryFunctions = _factoryFunctions,
-        _valueTypesContainerModel = _valueTypesContainerModel
+        _valueTypesContainerModel = _valueTypesContainerModel,
+        _hint = _hint
     };
 }

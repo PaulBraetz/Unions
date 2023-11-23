@@ -15,7 +15,7 @@
 	<PropertyGroup>
 		<WarningsAsErrors>CS8600</WarningsAsErrors>
 	</PropertyGroup>
-	
+
 	<PropertyGroup>
 		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<AssemblyName Condition="'$(SolutionName)'!=''">$(SolutionName).$(MSBuildProjectName)</AssemblyName>
@@ -33,7 +33,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		   <ProjectReference Include="..\RhoMicro.Unions.Generator\RhoMicro.Unions.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />   
+		<ProjectReference Include="..\RhoMicro.Unions.Generator\RhoMicro.Unions.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\RhoMicro.Unions\RhoMicro.Unions.csproj" />
 	</ItemGroup>
 

@@ -125,10 +125,46 @@ internal static partial class Extensions
     public static String ToDocCompatString(this ITypeSymbol symbol) =>
         symbol.ToFullString().Replace("<", "&lt;").Replace(">", "&gt;");
     public static String ToIdentifierCompatString(this ITypeSymbol symbol) =>
-        symbol.ToOpenString().Replace('<', '_').Replace('>', '_');
+        symbol.ToOpenString()
+            .Replace("<", "_of_")
+            .Replace('>', '_')
+            .Replace(",", "_and_")
+            .Replace(" ", String.Empty)
+            .TrimEnd('_');
+    public static String ToHintName(this ITypeSymbol symbol) =>
+        symbol.ToFullString()
+            .Replace("<", "_of_")
+            .Replace('>', '_')
+            .Replace(",", "_and_")
+            .Replace(" ", String.Empty)
+            .Replace('.', '_')
+            .Replace("::", "_")
+            .TrimEnd('_');
     public static String ToOpenString(this ISymbol symbol) =>
         symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat
-            .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
+            .WithMiscellaneousOptions(
+                    /*
+                        get rid of special types
+
+                             10110
+                        NAND 00100
+                          => 10010
+
+                             10110
+                          &! 00100
+                          => 10010
+
+                             00100
+                           ^ 11111
+                          => 11011
+
+                             10110
+                           & 11011
+                          => 10010
+                    */
+                    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
+                    (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue))
+                    .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
     public static String ToFullString(this ISymbol symbol)
     {
         var format = SymbolDisplayFormat.FullyQualifiedFormat

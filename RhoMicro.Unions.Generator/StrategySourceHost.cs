@@ -3,10 +3,7 @@
 namespace RhoMicro.Unions.Generator;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
 using System.Text;
 
 sealed class StrategySourceHost
@@ -18,7 +15,8 @@ sealed class StrategySourceHost
     private readonly List<Action<StringBuilder>> _dedicatedFieldAdditions = [];
     public void AddDedicatedField(StorageStrategy strategy) =>
         _dedicatedFieldAdditions.Add((s) =>
-            s.Append("private readonly ")
+            s.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]")
+                .AppendLine("private readonly ")
                 .Append(strategy.FullTypeName).Append(' ')
                 .Append(strategy.SafeAlias.ToGeneratedCamelCase())
                 .AppendLine(";"));
@@ -31,7 +29,9 @@ sealed class StrategySourceHost
     {
         if(!_referenceFieldRequired)
             return;
-        _ = sourceTextBuilder.AppendLine("private readonly global::System.Object __referenceTypeContainer;");
+        _ = sourceTextBuilder
+                .AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]")
+                .AppendLine("private readonly global::System.Object __referenceTypeContainer;");
     }
 
     private Boolean _valueTypeContainerTypeRequired;
@@ -59,10 +59,13 @@ sealed class StrategySourceHost
     {
         if(!_valueTypeContainerTypeRequired)
             return;
-        _ = sourceTextBuilder.AppendLine("private readonly ")
-            .Append(_target.ValueTypeContainerName)
-            .Append(" __valueTypeContainer;");
+        _ = sourceTextBuilder
+                .AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]")
+                .AppendLine("private readonly ")
+                .Append(_target.ValueTypeContainerName)
+                .Append(" __valueTypeContainer;");
     }
+    
     public void AppendValueTypeContainerType(StringBuilder sourceTextBuilder)
     {
         if(!_valueTypeContainerTypeRequired)
@@ -75,6 +78,7 @@ sealed class StrategySourceHost
         }
 
         _ = sourceTextBuilder
+                .AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]")
                 .AppendLine("internal readonly struct ")
                 .Append(_target.ValueTypeContainerName)
                 .AppendLine("{")

@@ -43,6 +43,9 @@ readonly struct RepresentableTypeNames
             String.Empty;
         var safeAlias = attribute.Alias != null && SyntaxFacts.IsValidIdentifier(attribute.Alias) ?
                 attribute.Alias :
+                (attribute.RepresentableTypeIsGenericParameter ?
+                attribute.GenericRepresentableTypeName :
+                attribute.RepresentableTypeSymbol?.ToIdentifierCompatString()) ??
                 simpleTypeName;
 
         var result = new RepresentableTypeNames(fullTypeName, openTypeName, simpleTypeName, safeAlias);

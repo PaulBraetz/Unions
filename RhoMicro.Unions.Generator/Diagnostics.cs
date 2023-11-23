@@ -165,19 +165,11 @@ internal static partial class Diagnostics
         Diagnostic.Create(
             new DiagnosticDescriptor(
                 $"RUG{(Int32)id:0000}",
-                GetLocalized($"{id}_Title"),
-                GetLocalized($"{id}_Message"),
+                TitleFor(id),
+                MessageFor(id),
                 _category,
                 severity,
                 true),
             location,
             messageArgs);
-
-    static LocalizableResourceString GetLocalized(String name) =>
-        String.IsNullOrEmpty(Resources.Diagnostics.ResourceManager.GetString(name)) ?
-            throw new ArgumentException($"No resource with name {name} could be located.", nameof(name)) :
-            new LocalizableResourceString(
-                name,
-                Resources.Diagnostics.ResourceManager,
-                typeof(Resources.Diagnostics));
 }
