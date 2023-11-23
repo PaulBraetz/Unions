@@ -9,20 +9,16 @@ using RhoMicro.Unions;
 
 using System;
 
-readonly struct RepresentableTypeNames
+readonly struct RepresentableTypeNames(
+    String fullTypeName,
+    String openTypeName,
+    String simpleTypeName,
+    String safeAlias)
 {
-    public RepresentableTypeNames(String fullTypeName, String openTypeName, String simpleTypeName, String safeAlias)
-    {
-        FullTypeName = fullTypeName;
-        OpenTypeName = openTypeName;
-        SimpleTypeName = simpleTypeName;
-        SafeAlias = safeAlias;
-    }
-
-    public readonly String FullTypeName;
-    public readonly String OpenTypeName;
-    public readonly String SimpleTypeName;
-    public readonly String SafeAlias;
+    public readonly String FullTypeName = fullTypeName;
+    public readonly String OpenTypeName = openTypeName;
+    public readonly String SimpleTypeName = simpleTypeName;
+    public readonly String SafeAlias = safeAlias;
 
     public static RepresentableTypeNames Create(UnionTypeAttribute attribute)
     {

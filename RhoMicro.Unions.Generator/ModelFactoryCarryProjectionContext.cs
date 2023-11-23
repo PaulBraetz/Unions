@@ -2,14 +2,8 @@
 
 using System.Threading;
 
-readonly struct ModelCreationContext
+readonly struct ModelCreationContext(TargetDataModel parameters, CancellationToken cancellationToken)
 {
-    public readonly TargetDataModel TargetData;
-    public readonly CancellationToken CancellationToken;
-
-    public ModelCreationContext(TargetDataModel parameters, CancellationToken cancellationToken)
-    {
-        TargetData = parameters;
-        CancellationToken = cancellationToken;
-    }
+    public readonly TargetDataModel TargetData = parameters;
+    public readonly CancellationToken CancellationToken = cancellationToken;
 }

@@ -10,6 +10,8 @@ partial class UnionTypeSettingsAttribute : IEquatable<UnionTypeSettingsAttribute
     public override Boolean Equals(Object? obj) => Equals(obj as UnionTypeSettingsAttribute);
     public Boolean Equals(UnionTypeSettingsAttribute? other) => other is not null && base.Equals(other) && ToStringSetting == other.ToStringSetting && Layout == other.Layout && DiagnosticsLevel == other.DiagnosticsLevel && ConstructorAccessibility == other.ConstructorAccessibility;
 
+    public Boolean IsReservedGenericTypeName(String name) => _reservedGenericTypeNames.Contains(name);
+
     public override Int32 GetHashCode()
     {
         var hashCode = 304521224;

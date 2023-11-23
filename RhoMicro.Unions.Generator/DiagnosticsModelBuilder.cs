@@ -119,7 +119,7 @@ sealed partial class DiagnosticsModelBuilder
     {
         var collisions = model.TargetSymbol.TypeParameters
             .Select(p => p.Name)
-            .Where(ConstantSources.ReservedGenericTypeNames.Contains)
+            .Where(model.Annotations.Settings.IsReservedGenericTypeName)
             .ToArray();
 
         if(collisions.Length == 0)

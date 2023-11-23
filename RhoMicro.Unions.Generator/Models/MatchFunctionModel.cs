@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 
 using System;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 
 readonly struct MatchFunctionModel
@@ -21,17 +22,18 @@ readonly struct MatchFunctionModel
     {
         var representableType = context.TargetData.Annotations.AllRepresentableTypes;
         var target = context.TargetData.TargetSymbol;
+        var settings = context.TargetData.Annotations.Settings;
 
         var sourceTextBuilder = representableType
             .Select((t, i) => (Type: t, Index: i))
             .Aggregate(
                 new StringBuilder("public TResult Match<")
-                    .Append(ConstantSources.GenericTResultType)
+                    .Append(settings.GenericTResultName)
                     .Append(">("),
                 (b, t) => b.Append("global::System.Func<")
                     .AppendFull(t.Type)
                     .Append(", ")
-                    .Append(ConstantSources.GenericTResultType)
+                    .Append(settings.GenericTResultName)
                     .Append("> on")
                     .Append(t.Type.Names.SafeAlias)
                     .AppendLine(t.Index == representableType.Count - 1 ? String.Empty : ","))

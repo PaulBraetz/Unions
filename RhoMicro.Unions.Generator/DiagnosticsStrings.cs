@@ -5,16 +5,10 @@ using System.Collections.Generic;
 
 internal static partial class Diagnostics
 {
-    readonly struct Item : IEquatable<Item>
+    readonly struct Item(String title, String message) : IEquatable<Item>
     {
-        public readonly String Title;
-        public readonly String Message;
-
-        public Item(String title, String message)
-        {
-            Title = title;
-            Message = message;
-        }
+        public readonly String Title = title;
+        public readonly String Message = message;
 
         public override Boolean Equals(Object? obj) => obj is Item item && Equals(item);
         public Boolean Equals(Item other) => Title == other.Title && Message == other.Message;
@@ -48,7 +42,7 @@ internal static partial class Diagnostics
 {Id.RecordTarget , new Item(message:"Union types may not be declared as 'record' types.",title:"Record Union Type Declaration")},
 {Id.RepresentableTypeIsInterface , new Item(message:"No conversion operators will be generated for the representable type {0} because it is an interface.",title:"Conversion Operators Omitted")},
 {Id.RepresentableTypeIsSupertype , new Item(message:"No conversion operators will be generated for the representable type {0} because it is a supertype of the target union type.",title:"Conversion Operators Omitted")},
-{Id.ReservedGenericParameterName , new Item(message:"The targeted union type contains a generic parameter named `{0}` which is reserved for generated code.",title:"Reserved Generic Parameter Name")},
+{Id.ReservedGenericParameterName , new Item(message:"The targeted union type contains a generic parameter named `{0}` which is reserved for generated code. Either change its name or use the `UnionTypeSettings` attribute to set generated generic type parameter names.",title:"Reserved Generic Parameter Name")},
 {Id.SmallGenericUnion , new Item(message:"The small layout setting was ignored because the target union type is generic.",title:"Ignoring Small Layout")},
 {Id.StaticTarget , new Item(message:"Union types may not be declared using the 'static' modifier.",title:"Static Union Type Declaration")},
 {Id.TleStrategy , new Item(message:"The selected storage option for {0} was ignored because it would cause a `TypeLoadException` to be thrown.",title:"TypeLoadException Prevented")},

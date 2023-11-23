@@ -1,7 +1,5 @@
 using RhoMicro.Unions;
 
-using System.ComponentModel;
-
 internal class Program
 {
     private static void Main(String[] _)
@@ -22,16 +20,17 @@ internal class Program
             //handle result
         }
 
-        //alternatively:
-        r.Switch(
-            onErrorMessage: m =>/*handle error*/,
-            onResult: r =>/*handle result*/);
+        ////alternatively:
+        //r.Switch(
+        //    onErrorMessage: m =>/*handle error*/,
+        //    onResult: r =>/*handle result*/);
     }
 }
 
 [UnionType(typeof(String), Alias = "ErrorMessage")]
-[UnionType(nameof(T), Alias = "Result")]
-readonly partial struct Result<T>;
+[UnionType(nameof(TResult), Alias = "Result")]
+[UnionTypeSettings(GenericTResultName = "TMatchResult")]
+readonly partial struct Result<TResult>;
 
 [UnionType(typeof(DateTime))]
 [UnionType(typeof(String))]

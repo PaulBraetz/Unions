@@ -22,18 +22,19 @@ readonly struct DownCastFunctionModel
     {
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
         var target = context.TargetData.TargetSymbol;
+        var settings = context.TargetData.Annotations.Settings;
 
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// </inheritdoc>")
             .Append("public ")
-            .Append(ConstantSources.GenericTResultType)
+            .Append(settings.GenericTResultName)
             .Append(" DownCast<")
-            .Append(ConstantSources.GenericTResultType)
+            .Append(settings.GenericTResultName)
             .Append(">()")
             .AppendLine(" where ")
-            .Append(ConstantSources.GenericTResultType)
+            .Append(settings.GenericTResultName)
             .Append(" : global::RhoMicro.Unions.Abstractions.IUnion<")
-            .Append(ConstantSources.GenericTResultType)
+            .Append(settings.GenericTResultName)
             .Append(',')
             .AppendAggregateJoin(
                 ",",
@@ -45,7 +46,7 @@ readonly struct DownCastFunctionModel
         if(representableTypes.Count == 1)
         {
             _ = sourceTextBuilder.Append(" => ")
-                .Append(ConstantSources.GenericTResultType)
+                .Append(settings.GenericTResultName)
                 .Append(".Create<").AppendFull(representableTypes[0])
                 .Append(">(").Append(representableTypes[0].Storage.GetInstanceVariableExpression()).Append(')');
         } else
@@ -54,7 +55,7 @@ readonly struct DownCastFunctionModel
                 sourceTextBuilder.Append(" => __tag switch{"),
                 (b, a) => b.Append(a.CorrespondingTag)
                     .Append(" => ")
-                    .Append(ConstantSources.GenericTResultType)
+                    .Append(settings.GenericTResultName)
                     .Append(".Create<").AppendFull(a)
                     .Append(">(").Append(a.Storage.GetInstanceVariableExpression()).Append(')')
                     .AppendLine(","))

@@ -20,6 +20,7 @@ readonly struct FactoryFunctionsModel
     {
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
         var target = context.TargetData.TargetSymbol;
+        var settings = context.TargetData.Annotations.Settings;
 
         var sourceText = new StringBuilder()
             .AppendAggregate(
@@ -35,36 +36,36 @@ readonly struct FactoryFunctionsModel
                     """))
             .AppendLine("/// </inheritdoc>")
             .Append("public static Boolean TryCreate<")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(">(")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(" value, out ").AppendOpen(target).AppendLine(" instance){switch(typeof(")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(")){")
             .AppendAggregate(
                 representableTypes,
                 (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
                 .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
                 .AppendLine("instance = new(Util.UnsafeConvert<")
-                .Append(ConstantSources.GenericFactoryIsAsType)
+                .Append(settings.GenericTValueName)
                 .Append(',').AppendFull(t)
                 .Append(">(value));return true;"))
             .AppendLine("default: instance = default; return false;}}")
             .AppendLine("/// </inheritdoc>")
             .Append("public static ").AppendOpen(target).AppendLine(" Create<")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(">(")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(" value){switch(typeof(")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(")){")
             .AppendAggregate(
                 representableTypes,
                 (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
                 .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
                 .AppendLine("return new(Util.UnsafeConvert<")
-            .Append(ConstantSources.GenericFactoryIsAsType)
-            .Append(",").AppendFull(t).Append(">(value));"))
+            .Append(settings.GenericTValueName)
+            .Append(',').AppendFull(t).Append(">(value));"))
             .Append("default: ").Append(ConstantSources.InvalidCreationThrow($"\"{target.ToOpenString()}\"", "value"))
             .AppendLine(";}}")
             .ToString();

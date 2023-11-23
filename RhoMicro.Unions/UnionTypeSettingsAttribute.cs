@@ -99,6 +99,16 @@ public enum DiagnosticsLevelSettings
 public sealed partial class UnionTypeSettingsAttribute : Attribute
 {
     /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    public UnionTypeSettingsAttribute() => _reservedGenericTypeNames =
+        [_genericTValueName, _genericTSupersetName, _genericTResultType];
+
+    private String _genericTValueName = "TValue";
+    private String _genericTSupersetName = "TSuperset";
+    private String _genericTResultType = "TResult";
+
+    /// <summary>
     /// Gets or sets a setting defining how to generate an implementation <see cref="Object.ToString"/>.
     /// </summary>
     public ToStringSetting ToStringSetting { get; set; }
@@ -114,4 +124,42 @@ public sealed partial class UnionTypeSettingsAttribute : Attribute
     /// Gets or sets a value indicating the desired accessibility of generated constructors.
     /// </summary>
     public ConstructorAccessibilitySetting ConstructorAccessibility { get; set; }
+    /// <summary>
+    /// Gets or sets the name of the generic parameter for generic <c>Is</c>, <c>As</c> and factory methods. 
+    /// Set this property in order to avoid name collisions with generic union type parameters
+    /// </summary>
+    public String GenericTValueName
+    {
+        get => _genericTValueName;
+        set => SetReservedName(ref _genericTValueName, value);
+    }
+    /// <summary>
+    /// Gets or sets the name of the generic parameter for the <c>DownCast</c> method. 
+    /// Set this property in order to avoid name collisions with generic union type parameters
+    /// </summary>
+    public String GenericTSupersetName
+    {
+        get => _genericTSupersetName;
+        set => SetReservedName(ref _genericTSupersetName, value);
+    }
+    /// <summary>
+    /// Gets or sets the name of the generic parameter for the <c>Match</c> method. 
+    /// Set this property in order to avoid name collisions with generic union type parameters
+    /// </summary>
+    public String GenericTResultName
+    {
+        get => _genericTResultType;
+        set => SetReservedName(ref _genericTResultType, value);
+    }
+    private void SetReservedName(ref String field, String newValue)
+    {
+        if(field != null)
+        {
+            _ = _reservedGenericTypeNames.Remove(field);
+        }
+
+        _ = _reservedGenericTypeNames.Add(newValue);
+        field = newValue;
+    }
+    private readonly HashSet<String> _reservedGenericTypeNames;
 }

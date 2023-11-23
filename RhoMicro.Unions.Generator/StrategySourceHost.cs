@@ -6,11 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-sealed class StrategySourceHost
+sealed class StrategySourceHost(TargetDataModel target)
 {
-    public StrategySourceHost(TargetDataModel target) => _target = target;
-
-    private readonly TargetDataModel _target;
+    private readonly TargetDataModel _target = target;
 
     private readonly List<Action<StringBuilder>> _dedicatedFieldAdditions = [];
     public void AddDedicatedField(StorageStrategy strategy) =>

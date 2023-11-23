@@ -12,33 +12,21 @@ using System.Diagnostics;
 using System.Reflection.Metadata;
 
 [DebuggerDisplay("{Names.SimpleTypeName}")]
-sealed class RepresentableTypeData : IEquatable<RepresentableTypeData?>
+sealed class RepresentableTypeData(
+    UnionTypeAttribute attribute,
+    INamedTypeSymbol target,
+    String commentRef,
+    RepresentableTypeNature nature,
+    RepresentableTypeNames names,
+    StorageStrategy storage) : IEquatable<RepresentableTypeData?>
 {
-    public RepresentableTypeData(
-        UnionTypeAttribute attribute,
-        INamedTypeSymbol target,
-        String commentRef,
-        RepresentableTypeNature nature,
-        RepresentableTypeNames names,
-        StorageStrategy storage)
-    {
-        Attribute = attribute;
-        Target = target;
-        DocCommentRef = commentRef;
-        Nature = nature;
-        Names = names;
-        Storage = storage;
-
-        CorrespondingTag = $"Tag.{names.SafeAlias}";
-    }
-
-    public readonly UnionTypeAttribute Attribute;
-    public readonly INamedTypeSymbol Target;
-    public readonly String DocCommentRef;
-    public readonly RepresentableTypeNature Nature;
-    public readonly RepresentableTypeNames Names;
-    public readonly StorageStrategy Storage;
-    public readonly String CorrespondingTag;
+    public readonly UnionTypeAttribute Attribute = attribute;
+    public readonly INamedTypeSymbol Target = target;
+    public readonly String DocCommentRef = commentRef;
+    public readonly RepresentableTypeNature Nature = nature;
+    public readonly RepresentableTypeNames Names = names;
+    public readonly StorageStrategy Storage = storage;
+    public readonly String CorrespondingTag = $"Tag.{names.SafeAlias}";
 
     public static RepresentableTypeData Create(
         UnionTypeAttribute attribute,

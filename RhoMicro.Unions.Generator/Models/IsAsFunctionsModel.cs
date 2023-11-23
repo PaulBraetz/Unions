@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Formatting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 
 readonly struct IsAsFunctionsModel
@@ -25,17 +26,18 @@ readonly struct IsAsFunctionsModel
     {
         var attributes = context.TargetData.Annotations.AllRepresentableTypes;
         var target = context.TargetData.TargetSymbol;
+        var settings = context.TargetData.Annotations.Settings;
 
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// <inheritdoc/>")
             .Append("public global::System.Boolean Is<")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(">() => ");
 #pragma warning disable IDE0045 // Convert to conditional expression
         if(attributes.Count > 1)
         {
             _ = sourceTextBuilder.AppendLine("typeof(")
-                .Append(ConstantSources.GenericFactoryIsAsType)
+                .Append(settings.GenericTValueName)
                 .Append(") == __tag switch {")
                 .AppendAggregate(
                     attributes,
@@ -45,7 +47,7 @@ readonly struct IsAsFunctionsModel
         } else
         {
             _ = sourceTextBuilder.Append("typeof(")
-                .Append(ConstantSources.GenericFactoryIsAsType)
+                .Append(settings.GenericTValueName)
                 .Append(") == typeof(")
                 .AppendFull(attributes[0])
                 .AppendLine(");");
@@ -72,9 +74,9 @@ readonly struct IsAsFunctionsModel
 
         _ = sourceTextBuilder.AppendLine("/// <inheritdoc/>")
             .Append("public ")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(" As<")
-            .Append(ConstantSources.GenericFactoryIsAsType)
+            .Append(settings.GenericTValueName)
             .Append(">() => ");
 
         if(attributes.Count > 1)
@@ -83,20 +85,20 @@ readonly struct IsAsFunctionsModel
                 .AppendAggregate(
                     attributes,
                     (b, a) => b.Append(a.CorrespondingTag).AppendLine(" => typeof(")
-                    .Append(ConstantSources.GenericFactoryIsAsType)
+                    .Append(settings.GenericTValueName)
                     .Append(") == typeof(")
-                    .AppendFull(a).Append(")?").Append(a.Storage.GetConvertedInstanceVariableExpression(ConstantSources.GenericFactoryIsAsType))
-                    .Append(':').Append(ConstantSources.InvalidConversionThrow($"nameof({ConstantSources.GenericFactoryIsAsType})")).AppendLine(","))
-                .AppendLine("_ => ").Append(ConstantSources.InvalidConversionThrow($"nameof({ConstantSources.GenericFactoryIsAsType})"))
+                    .AppendFull(a).Append(")?").Append(a.Storage.GetConvertedInstanceVariableExpression(settings.GenericTValueName))
+                    .Append(':').Append(ConstantSources.InvalidConversionThrow($"nameof({settings.GenericTValueName})")).AppendLine(","))
+                .AppendLine("_ => ").Append(ConstantSources.InvalidConversionThrow($"nameof({settings.GenericTValueName})"))
                 .AppendLine("};");
         } else
         {
             _ = sourceTextBuilder.Append("typeof(")
-                .Append(ConstantSources.GenericFactoryIsAsType)
+                .Append(settings.GenericTValueName)
                 .Append(") == typeof(")
                 .AppendFull(attributes[0])
-                .AppendLine(")?").Append(attributes[0].Storage.GetConvertedInstanceVariableExpression(ConstantSources.GenericFactoryIsAsType))
-                    .Append(':').Append(ConstantSources.InvalidConversionThrow($"nameof({ConstantSources.GenericFactoryIsAsType})")).AppendLine(";");
+                .AppendLine(")?").Append(attributes[0].Storage.GetConvertedInstanceVariableExpression(settings.GenericTValueName))
+                    .Append(':').Append(ConstantSources.InvalidConversionThrow($"nameof({settings.GenericTValueName})")).AppendLine(";");
         }
 #pragma warning restore IDE0045 // Convert to conditional expression
         if(attributes.Count > 1)

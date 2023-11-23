@@ -7,16 +7,10 @@ using System.Collections.Generic;
 
 sealed partial class SourceModelBuilder
 {
-    private sealed class BuiltModel : Model
+    private sealed class BuiltModel(String source, String hint) : Model
     {
-        private readonly String _source;
-        private readonly String _hint;
-
-        public BuiltModel(String source, String hint)
-        {
-            _source = source;
-            _hint = hint;
-        }
+        private readonly String _source = source;
+        private readonly String _hint = hint;
 
         public override void AddToContext(SourceProductionContext context) => context.AddSource(_hint, _source);
         public override Boolean Equals(Object? obj) =>
