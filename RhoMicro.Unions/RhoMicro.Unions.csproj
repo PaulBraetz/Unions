@@ -19,7 +19,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.2</Version>
+		<Version>0.0.0-alpha.3</Version>
 		<PackageId>RhoMicro.Unions.Attributes</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
@@ -28,10 +28,7 @@
 
 	<PropertyGroup>
 		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
-		<AssemblyName Condition="'$(SolutionName)'!=''">$(SolutionName).$(MSBuildProjectName)</AssemblyName>
-
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-		<RootNamespace Condition="'$(SolutionName)'!=''">$(SolutionName).$(MSBuildProjectName.Replace(".", "_"))</RootNamespace>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
