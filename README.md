@@ -2,7 +2,15 @@
 
 Read about union types here: https://en.wikipedia.org/wiki/Union_type
 
-Alternative union type implementations: 
+## Features
+
+- generate rich examination and conversion api
+- automatic relation type detection (congruency, superset, subset, intersection)
+- generate conversion operators
+- generate meaningful api names like `myUnion.IsResult` or `MyUnion.CreateFromResult(result)`
+
+## Alternative union type implementations
+ 
 - [OneOf](https://github.com/mcintyre321/OneOf)
 - [ValueVariant](https://github.com/hikarin522/ValueVariant)
 - [DiscriminatedUnion](https://github.com/sdedalus/DiscriminatedUnion)
