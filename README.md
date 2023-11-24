@@ -4,11 +4,12 @@ Read about union types here: https://en.wikipedia.org/wiki/Union_type
 
 ## Table of Contents
 
-1. Features
-2. Alternative Union Type Implementations
-3. Installation
-4. How To Use
-4.1. Available Attributes
+1. [Features](#Features)
+2. [Alternative Union Type Implementations](#Alternative-Union-Type-Implementations)
+3. [Installation](#Installation)
+4. [How To Use](#How-To-Use)
+5. [Contrived Example](#Contrived-Example)
+6. [Why Not OneOf?](#Why-Not-OneOf?)
 
 ## Features
 
@@ -118,6 +119,10 @@ readonly partial struct Union;
 ```
 
 - `Storage`: optimize the generated storage implementation for the representable type against boxing or size constraints:
+<details>
+<summary>
+Available Options
+</summary>
 ```cs
 public enum StorageOption
 {
@@ -185,6 +190,7 @@ public enum StorageOption
     Field
 }
 ```
+</details>
 
 #### `UnionTypeSettingsAttribute`
 

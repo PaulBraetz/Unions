@@ -22,7 +22,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.15</Version>
+		<Version>0.0.0-alpha.16</Version>
 		<PackageId>RhoMicro.Unions</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
@@ -34,8 +34,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<AssemblyName>$(MSBuildProjectName).430</AssemblyName>
-		<!--<AssemblyName>$(MSBuildProjectName)</AssemblyName>-->
+		<!--<AssemblyName>$(MSBuildProjectName).430</AssemblyName>-->
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 

@@ -2,17 +2,10 @@ using OneOf;
 
 using RhoMicro.Unions;
 
-internal class Program
+internal partial class Program
 {
     private static void Main(String[] _)
     {
-        Union u = DateTime.Now;
-        //Output: Union(<DateTime> | Double | String){23/11/2023 17:58:58}
-        Console.WriteLine(u);
-        var eu = u.DownCast<CongruentUnion>();
-        //Output: EquivalentUnion(<DateTime> | Double | String){23/11/2023 17:58:58}
-        Console.WriteLine(eu);
-
         Union union = "Hello, World!";
         Console.WriteLine(union);
         union = DateTime.Now;
@@ -48,37 +41,38 @@ internal class Program
         intersecting = (IntersectionUnion)union;
         Console.WriteLine(intersecting);
     }
+
+    [UnionType(typeof(Int32), Storage = StorageOption.Field)]
+    readonly partial struct WrapperUnion;
+
+    [UnionType(typeof(DateTime))]
+    [UnionType(typeof(String))]
+    [UnionType(typeof(Double))]
+    [Relation(typeof(CongruentUnion))]
+    [Relation(typeof(SubsetUnion))]
+    [Relation(typeof(SupersetUnion))]
+    [Relation(typeof(IntersectionUnion))]
+    readonly partial struct Union;
+
+    [UnionType(typeof(Double))]
+    [UnionType(typeof(DateTime))]
+    [UnionType(typeof(String))]
+    sealed partial class CongruentUnion;
+
+    [UnionType(typeof(DateTime))]
+    [UnionType(typeof(String))]
+    partial class SubsetUnion;
+
+    [UnionType(typeof(DateTime))]
+    [UnionType(typeof(String))]
+    [UnionType(typeof(Double))]
+    [UnionType(typeof(Int32))]
+    readonly partial struct SupersetUnion;
+
+    [UnionType(typeof(Int16))]
+    [UnionType(typeof(String))]
+    [UnionType(typeof(Double))]
+    [UnionType(typeof(List<Byte>))]
+    partial class IntersectionUnion;
+
 }
-
-[UnionType(typeof(Int32), Storage = StorageOption.Field)]
-readonly partial struct WrapperUnion;
-
-[UnionType(typeof(DateTime))]
-[UnionType(typeof(String))]
-[UnionType(typeof(Double))]
-[Relation(typeof(CongruentUnion))]
-[Relation(typeof(SubsetUnion))]
-[Relation(typeof(SupersetUnion))]
-[Relation(typeof(IntersectionUnion))]
-readonly partial struct Union;
-
-[UnionType(typeof(Double))]
-[UnionType(typeof(DateTime))]
-[UnionType(typeof(String))]
-sealed partial class CongruentUnion;
-
-[UnionType(typeof(DateTime))]
-[UnionType(typeof(String))]
-partial class SubsetUnion;
-
-[UnionType(typeof(DateTime))]
-[UnionType(typeof(String))]
-[UnionType(typeof(Double))]
-[UnionType(typeof(Int32))]
-readonly partial struct SupersetUnion;
-
-[UnionType(typeof(Int16))]
-[UnionType(typeof(String))]
-[UnionType(typeof(Double))]
-[UnionType(typeof(List<Byte>))]
-partial class IntersectionUnion;
