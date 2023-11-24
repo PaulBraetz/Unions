@@ -2,6 +2,14 @@
 
 Read about union types here: https://en.wikipedia.org/wiki/Union_type
 
+## Table of Contents
+
+1. Features
+2. Alternative Union Type Implementations
+3. Installation
+4. How To Use
+4.1. Available Attributes
+
 ## Features
 
 - generate rich examination and conversion api
@@ -10,7 +18,7 @@ Read about union types here: https://en.wikipedia.org/wiki/Union_type
 - generate meaningful api names like `myUnion.IsResult` or `MyUnion.CreateFromResult(result)`
 - generate the most efficient impementation for your usecase and optimize against boxing or size constraints
 
-## Alternative union type implementations
+## Alternative Union Type Implementations
  
 - [OneOf](https://github.com/mcintyre321/OneOf)
 - [ValueVariant](https://github.com/hikarin522/ValueVariant)
@@ -76,9 +84,12 @@ readonly partial struct Result<T>;
 - `Alias`: define aliae for generated members, e.g.: 
 ```cs
 Names n = "John";
-if(n.IsSingleName){
+if(n.IsSingleName)
+{
     //...
-}else if(n.IsMultipleNames){
+}
+else if(n.IsMultipleNames)
+{
     //...
 }
 [UnionType(typeof(List<String>), Alias = "MultipleNames")]
