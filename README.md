@@ -121,7 +121,7 @@ readonly partial struct Union;
 - `Storage`: optimize the generated storage implementation for the representable type against boxing or size constraints:
 <details>
 <summary>
-Available Options
+Available Storage Options
 </summary>
 
 ```cs
