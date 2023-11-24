@@ -8,6 +8,7 @@ Read about union types here: https://en.wikipedia.org/wiki/Union_type
 - automatic relation type detection (congruency, superset, subset, intersection)
 - generate conversion operators
 - generate meaningful api names like `myUnion.IsResult` or `MyUnion.CreateFromResult(result)`
+- generate the most efficient impementation for your usecase and optimize against boxing or size constraints
 
 ## Alternative union type implementations
  
