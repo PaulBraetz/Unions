@@ -88,8 +88,7 @@ Names n = "John";
 if(n.IsSingleName)
 {
     //...
-}
-else if(n.IsMultipleNames)
+} else if(n.IsMultipleNames)
 {
     //...
 }
