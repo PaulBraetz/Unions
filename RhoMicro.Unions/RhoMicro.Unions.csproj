@@ -12,6 +12,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Paul Brätz</Authors>
 		<Description>
@@ -19,7 +20,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.4</Version>
+		<Version>1.0.0</Version>
 		<PackageId>RhoMicro.Unions.Attributes</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
@@ -40,5 +41,9 @@
 
 	<ItemGroup>
 		<None Remove=".editorconfig"></None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\"/>
 	</ItemGroup>
 </Project>
