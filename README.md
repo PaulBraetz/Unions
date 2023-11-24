@@ -123,6 +123,7 @@ readonly partial struct Union;
 <summary>
 Available Options
 </summary>
+
 ```cs
 public enum StorageOption
 {
@@ -190,6 +191,7 @@ public enum StorageOption
     Field
 }
 ```
+
 </details>
 
 #### `UnionTypeSettingsAttribute`
