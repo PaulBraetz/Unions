@@ -224,6 +224,18 @@ public enum ToStringSetting
 }
 ```
 
+- `Layout`: generate a layout attribute for size optimization
+```cs
+public enum LayoutSetting
+{
+    // Generate an annotation optimized for size.
+    Small,
+    // Do not generate any annotations.
+    Auto
+}
+```
+
+
 - Generic Names: define how generic type parameter names should be generated:
 ```cs
 // Gets or sets the name of the generic parameter for generic Is, As and factory methods. 

@@ -13,22 +13,6 @@ internal class Program
         //Output: EquivalentUnion(<DateTime> | Double | String){23/11/2023 17:58:58}
         Console.WriteLine(eu);
 
-        var r = Result<String>.CreateFromResult("Hello, World!");
-        var error = Result<String>.CreateFromErrorMessage("FAIL!");
-
-        if(r.IsErrorMessage)
-        {
-            //handle error
-        } else if(r.IsResult)
-        {
-            //handle result
-        }
-
-        ////alternatively:
-        //r.Switch(
-        //    onErrorMessage: m =>/*handle error*/,
-        //    onResult: r =>/*handle result*/);
-
         Union union = "Hello, World!";
         Console.WriteLine(union);
         union = DateTime.Now;
@@ -92,7 +76,7 @@ partial class SubsetUnion;
 [UnionType(typeof(String))]
 [UnionType(typeof(Double))]
 [UnionType(typeof(Int32))]
-partial struct SupersetUnion;
+readonly partial struct SupersetUnion;
 
 [UnionType(typeof(Int16))]
 [UnionType(typeof(String))]
