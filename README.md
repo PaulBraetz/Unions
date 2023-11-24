@@ -26,7 +26,7 @@ Requirements: `net7` (due to `static abstract` members)
 
 Package Reference:
 ```
-<PackageReference Include="RhoMicro.Unions" Version="0.0.0-alpha.11">
+<PackageReference Include="RhoMicro.Unions" Version="0.0.0-alpha.16">
   <PrivateAssets>all</PrivateAssets>
   <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 </PackageReference>
