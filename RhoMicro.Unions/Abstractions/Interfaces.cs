@@ -3,6 +3,7 @@
 // </auto-generated>
 namespace RhoMicro.Unions.Abstractions;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// Represents a superset union type.
@@ -34,8 +35,12 @@ public interface IUnion<TSelf>
     /// <summary>
     /// Gets the type reresented by this instance.
     /// </summary>
-    /// <returns>The type represented by this instance.</returns>
-    Type GetRepresentedType();
+    Type RepresentedType { get; }
+    /// <summary>
+    /// Gets types of value this union type can represent.
+    /// </summary>
+    static IReadOnlyList<Type> RepresentableTypes { get; }
+
     /// <summary>
     /// Determines whether this instance is representing a value of type <typeparamref name = "T"/>.
     /// </summary>

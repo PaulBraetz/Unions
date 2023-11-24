@@ -26,7 +26,7 @@ readonly struct InterfaceImplementationModel
     static InterfaceImplementationModel Create(ModelCreationContext context)
     {
         var attributes = context.TargetData.Annotations;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var targetDeclaration = context.TargetData.TargetDeclaration;
 
         var sourceTextBuilder = attributes.AllRepresentableTypes

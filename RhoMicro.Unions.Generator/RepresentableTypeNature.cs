@@ -22,7 +22,8 @@ static class RepresentableTypeNatureFactory
     public static RepresentableTypeNature Create(UnionTypeAttribute attribute, INamedTypeSymbol target)
     {
         var representedSymbol = attribute.RepresentableTypeIsGenericParameter ?
-            target.TypeParameters.SingleOrDefault(p => p.Name == attribute.GenericRepresentableTypeName) :
+            target.TypeParameters.OfType<ITypeSymbol>()
+                .SingleOrDefault(p => p.Name == attribute.GenericRepresentableTypeName) :
             attribute.RepresentableTypeSymbol;
 
         if(representedSymbol == null)

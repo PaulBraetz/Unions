@@ -22,7 +22,7 @@ readonly struct GetHashcodeFunctionModel
     private static GetHashcodeFunctionModel Create(ModelCreationContext context)
     {
         var annotations = context.TargetData.Annotations;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
 
         var sourceTextBuilder = new StringBuilder("public override Int32 GetHashCode() =>");
 

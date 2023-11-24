@@ -24,7 +24,7 @@ readonly struct ConstructorsModel
 
     private static ConstructorsModel Create(ModelCreationContext context)
     {
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var annotations = context.TargetData.Annotations;
 
         var sourceText = annotations.AllRepresentableTypes

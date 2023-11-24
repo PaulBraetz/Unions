@@ -23,7 +23,7 @@ readonly struct ToStringFunctionModel : IEquatable<ToStringFunctionModel>
 
     private static ToStringFunctionModel CreateDetailed(ModelCreationContext context)
     {
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var attributes = context.TargetData.Annotations.AllRepresentableTypes;
 
         var sourceTextBuilder = new StringBuilder()

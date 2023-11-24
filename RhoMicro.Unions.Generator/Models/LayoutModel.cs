@@ -21,7 +21,7 @@ readonly struct LayoutModel
     static LayoutModel Create(ModelCreationContext context)
     {
         var sourceText = context.TargetData.Annotations.Settings.Layout == LayoutSetting.Small &&
-            !context.TargetData.TargetSymbol.IsGenericType ?
+            !context.TargetData.Symbol.IsGenericType ?
             "[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 1)]" :
             String.Empty;
         var result = new LayoutModel(sourceText);

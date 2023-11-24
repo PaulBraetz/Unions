@@ -4,33 +4,25 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 
-sealed class TargetDataModel : IEquatable<TargetDataModel>
+internal sealed class TargetDataModel : UnionDataModel
 {
     private TargetDataModel(
-        INamedTypeSymbol targetSymbol,
         TypeDeclarationSyntax targetDeclaration,
         SemanticModel semanticModel,
         AnnotationDataModel annotations,
-        OperatorOmissionModel operatorOmissions)
+        OperatorOmissionModel operatorOmissions,
+        INamedTypeSymbol symbol)
+        : base(annotations, operatorOmissions, symbol)
     {
-        TargetSymbol = targetSymbol;
         TargetDeclaration = targetDeclaration;
         SemanticModel = semanticModel;
-        Annotations = annotations;
-        OperatorOmissions = operatorOmissions;
 
-        ValueTypeContainerName = $"__{TargetSymbol.ToIdentifierCompatString()}_ValueTypeContainer";
+        ValueTypeContainerName = $"__{Symbol.ToIdentifierCompatString()}_ValueTypeContainer";
     }
 
-    public readonly INamedTypeSymbol TargetSymbol;
     public readonly TypeDeclarationSyntax TargetDeclaration;
     public readonly SemanticModel SemanticModel;
-    public readonly AnnotationDataModel Annotations;
-    public readonly OperatorOmissionModel OperatorOmissions;
     public readonly String ValueTypeContainerName;
 
     public static TargetDataModel Create(TypeDeclarationSyntax targetDeclaration, SemanticModel semanticModel)
@@ -40,15 +32,14 @@ sealed class TargetDataModel : IEquatable<TargetDataModel>
                 $"targetDeclaration {targetDeclaration.Identifier.Text} could not be retrieved as an instance of ITypeSymbol from the semantic model provided.",
                 nameof(targetDeclaration));
 
-        var annotations = AnnotationDataModel.Create(targetSymbol);
-        var omissions = OperatorOmissionModel.Create(targetSymbol, annotations);
+        var (annotations, omissions) = CreateModels(targetSymbol);
 
         var result = new TargetDataModel(
-            targetSymbol,
             targetDeclaration,
             semanticModel,
             annotations,
-            omissions);
+            omissions,
+            targetSymbol);
 
         return result;
     }
@@ -68,12 +59,4 @@ sealed class TargetDataModel : IEquatable<TargetDataModel>
 
         return result;
     }
-    public override Boolean Equals(Object? obj) =>
-        obj is TargetDataModel other && Equals(other);
-    public Boolean Equals(TargetDataModel? other) =>
-        other is not null && Annotations.Equals(other.Annotations);
-    public override Int32 GetHashCode() => Annotations.GetHashCode();
-
-    public static Boolean operator ==(TargetDataModel left, TargetDataModel right) => EqualityComparer<TargetDataModel>.Default.Equals(left, right);
-    public static Boolean operator !=(TargetDataModel left, TargetDataModel right) => !(left == right);
 }

@@ -21,19 +21,19 @@ readonly struct MatchFunctionModel
     static MatchFunctionModel Create(ModelCreationContext context)
     {
         var representableType = context.TargetData.Annotations.AllRepresentableTypes;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var settings = context.TargetData.Annotations.Settings;
 
         var sourceTextBuilder = representableType
             .Select((t, i) => (Type: t, Index: i))
             .Aggregate(
-                new StringBuilder("public TResult Match<")
-                    .Append(settings.GenericTResultName)
+                new StringBuilder("public ").Append(settings.MatchTypeName).Append(" Match<")
+                    .Append(settings.MatchTypeName)
                     .Append(">("),
                 (b, t) => b.Append("global::System.Func<")
                     .AppendFull(t.Type)
                     .Append(", ")
-                    .Append(settings.GenericTResultName)
+                    .Append(settings.MatchTypeName)
                     .Append("> on")
                     .Append(t.Type.Names.SafeAlias)
                     .AppendLine(t.Index == representableType.Count - 1 ? String.Empty : ","))

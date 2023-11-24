@@ -3,6 +3,8 @@
 using Microsoft.CodeAnalysis;
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 internal static partial class Diagnostics
 {
@@ -32,144 +34,59 @@ internal static partial class Diagnostics
         PossibleTleStrategy = 19,
         TleStrategy = 20,
         SmallGenericUnion = 21,
-        GenericViolationStrategy = 22
+        GenericViolationStrategy = 22,
+        GenericRelation = 23,
+        BidirectionalRelation = 24,
+        DuplicateRelation = 25
     }
+    public static Diagnostic DuplicateRelation(Location location, String relationName) =>
+        Create(Id.DuplicateRelation, location, relationName);
+    public static Diagnostic BidirectionalRelation(Location location, String relationName) =>
+        Create(Id.BidirectionalRelation, location, relationName);
+    public static Diagnostic GenericRelation(Location location) =>
+        Create(Id.GenericRelation, location);
     public static Diagnostic GenericViolationStrategy(Location location, String typeName) =>
-        Create(
-            Id.PossibleBoxingStrategy,
-            location,
-            DiagnosticSeverity.Warning,
-            typeName);
+        Create(Id.GenericViolationStrategy, location, typeName);
     public static Diagnostic SmallGenericUnion(Location location) =>
-        Create(
-            Id.SmallGenericUnion,
-            location,
-            DiagnosticSeverity.Info);
+        Create(Id.SmallGenericUnion, location);
     public static Diagnostic PossibleBoxingStrategy(Location location, String typeName) =>
-        Create(
-            Id.PossibleBoxingStrategy,
-            location,
-            DiagnosticSeverity.Warning,
-            typeName);
+        Create(Id.PossibleBoxingStrategy, location, typeName);
     public static Diagnostic BoxingStrategy(Location location, String typeName) =>
-        Create(
-            Id.BoxingStrategy,
-            location,
-            DiagnosticSeverity.Warning,
-            typeName);
+        Create(Id.BoxingStrategy, location, typeName);
     public static Diagnostic PossibleTleStrategy(Location location, String typeName) =>
-        Create(
-            Id.PossibleTleStrategy,
-            location,
-            DiagnosticSeverity.Warning,
-            typeName);
+        Create(Id.PossibleTleStrategy, location, typeName);
     public static Diagnostic TleStrategy(Location location, String typeName) =>
-        Create(
-            Id.TleStrategy,
-            location,
-            DiagnosticSeverity.Warning,
-            typeName);
+        Create(Id.TleStrategy, location, typeName);
     public static Diagnostic UnknownGenericParameterName(Location location, String name) =>
-        Create(
-            Id.UnknownGenericParameterName,
-            location,
-            DiagnosticSeverity.Error,
-            name);
+        Create(Id.UnknownGenericParameterName, location, name);
     public static Diagnostic ReservedGenericParameterName(Location location, String name) =>
-        Create(
-            Id.ReservedGenericParameterName,
-            location,
-            DiagnosticSeverity.Error,
-            name);
+        Create(Id.ReservedGenericParameterName, location, name);
     public static Diagnostic RepresentableTypeIsInterface(Location location, String representableTypeName) =>
-        Create(
-            Id.RepresentableTypeIsInterface,
-            location,
-            DiagnosticSeverity.Info,
-            representableTypeName);
+        Create(Id.RepresentableTypeIsInterface, location, representableTypeName);
     public static Diagnostic RepresentableTypeIsSupertype(Location location, String representableTypeName) =>
-        Create(
-            Id.RepresentableTypeIsSupertype,
-            location,
-            DiagnosticSeverity.Info,
-            representableTypeName);
+        Create(Id.RepresentableTypeIsSupertype, location, representableTypeName);
     public static Diagnostic UnionTypeSettingsOnNonUnionType(Location location) =>
-        Create(
-            Id.UnionTypeSettingsOnNonUnionType,
-            location,
-            DiagnosticSeverity.Warning);
+        Create(Id.UnionTypeSettingsOnNonUnionType, location);
     public static Diagnostic AliasCollision(Location location, String representableTypeName) =>
-        Create(
-            Id.AliasCollision,
-            location,
-            DiagnosticSeverity.Error,
-            representableTypeName);
+        Create(Id.AliasCollision, location, representableTypeName);
     public static Diagnostic InvalidAttributeTarget(Location location) =>
-        Create(
-            Id.InvalidAttributeTarget,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.InvalidAttributeTarget, location);
     public static Diagnostic TooManyTypes(Location location) =>
-        Create(
-            Id.TooManyTypes,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.TooManyTypes, location);
     public static Diagnostic StaticTarget(Location location) =>
-        Create(
-            Id.StaticTarget,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.StaticTarget, location);
     public static Diagnostic RecordTarget(Location location) =>
-        Create(
-            Id.RecordTarget,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.RecordTarget, location);
     public static Diagnostic NonPartialDeclaration(Location location) =>
-        Create(
-            Id.NonPartialDeclaration,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.NonPartialDeclaration, location);
     public static Diagnostic MissingUnionTypeAttribute(Location location) =>
-        Create(
-            Id.MissingUnionTypeAttribute,
-            location,
-            DiagnosticSeverity.Error);
+        Create(Id.MissingUnionTypeAttribute, location);
     public static Diagnostic GeneratorException(Exception exception) =>
-        Create(
-            Id.GeneratorException,
-            Location.None,
-            DiagnosticSeverity.Error,
-            exception.Message);
+        Create(Id.GeneratorException, Location.None, exception.Message);
     public static Diagnostic DuplicateUnionTypeAttributes(String unionTypeName, Location location) =>
-        Create(
-            Id.DuplicateUnionTypeAttributes,
-            location,
-            DiagnosticSeverity.Error,
-            unionTypeName);
+        Create(Id.DuplicateUnionTypeAttributes, location, unionTypeName);
     public static Diagnostic ImplicitConversionOptionOnNonSolitary(Location location) =>
-        Create(
-            Id.ImplicitConversionOptionOnNonSolitary,
-            location,
-            DiagnosticSeverity.Warning);
+        Create(Id.ImplicitConversionOptionOnNonSolitary, location);
     public static Diagnostic ImplicitConversionOptionOnSolitary(String unionTypeName, String representableTypeName, Location location) =>
-        Create(
-            Id.ImplicitConversionOptionOnSolitary,
-            location,
-            DiagnosticSeverity.Info,
-            $"ISuperset<{representableTypeName}, {unionTypeName}>");
-    static Diagnostic Create(
-        Id id,
-        Location location,
-        DiagnosticSeverity severity,
-        params Object[] messageArgs) =>
-        Diagnostic.Create(
-            new DiagnosticDescriptor(
-                $"RUG{(Int32)id:0000}",
-                TitleFor(id),
-                MessageFor(id),
-                _category,
-                severity,
-                true),
-            location,
-            messageArgs);
+        Create(Id.ImplicitConversionOptionOnSolitary, location, $"ISuperset<{representableTypeName}, {unionTypeName}>");
 }

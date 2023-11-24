@@ -26,6 +26,12 @@ CLI:
 dotnet add package RhoMicro.Unions
 ```
 
+## Short How To
+
+```cs
+
+```
+
 ## Contrived Example
 
 In our imaginary usecase, a user shall be retrieved from the infrastructure via a name query. The following types will be found throughout the example:
@@ -225,7 +231,7 @@ readonly partial struct Union;
 sealed partial class EquivalentUnion;
 ```
 - avoid `OneOf` invading your apis, instead rely on dedicated domain names for your union types
-- use custom generated members for contextually semantic access to union data:
+- use custom generated members with meaningful names for access to union data:
 ```cs
 var r = Result<String>.CreateFromResult("Hello, World!");
 if(r.IsErrorMessage)

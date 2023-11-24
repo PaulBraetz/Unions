@@ -141,7 +141,7 @@ sealed partial class SourceModelBuilder
     }
 
     private String? _isAsFunctions;
-    public void SetIsAsFunctions(IsAsFunctionsModel model)
+    public void SetIsAsProperties(IsAsPropertiesModel model)
     {
         _isInitialized = true;
 
@@ -157,7 +157,7 @@ sealed partial class SourceModelBuilder
     }
 
     private String? _getRepresentedTypeFunction;
-    public void SetGetRepresentedTypeFunction(GetRepresentedTypeFunctionModel model)
+    public void SetRepresentedTypesPropertiesFunction(RepresentedTypesPropertiesModel model)
     {
         _isInitialized = true;
 
@@ -219,7 +219,6 @@ sealed partial class SourceModelBuilder
             .AppendLine("#endregion")
             .AppendLine("}")
             .AppendLine(_containingClassesTail)
-            .AppendLine(ConstantSources.Util)
             .AppendLine(String.IsNullOrEmpty(_targetNamespace) ? "" : "}");
 
         var source = builder.ToString();

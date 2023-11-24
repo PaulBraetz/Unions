@@ -22,7 +22,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.13</Version>
+		<Version>0.0.0-alpha.15</Version>
 		<PackageId>RhoMicro.Unions</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>
@@ -34,12 +34,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<!--<AssemblyName>$(MSBuildProjectName).406</AssemblyName>-->
-		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName).430</AssemblyName>
+		<!--<AssemblyName>$(MSBuildProjectName)</AssemblyName>-->
 		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	</PropertyGroup>
 
-	<!--AutoUpdateAssemblyName-->
+	<!--_AutoUpdateAssemblyName-->
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<WarningsAsErrors>$(WarningsAsErrors);NU1605;1591;1573;1712;CA1829;nullable</WarningsAsErrors>
@@ -61,7 +61,7 @@
 	<ItemGroup>
 		<PackageReference Update="NETStandard.Library" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.CodeAnalysis" Version="4.7.0" />
-		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.9">
+		<PackageReference Include="RhoMicro.AttributeFactoryGenerator" Version="1.0.10">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

@@ -24,7 +24,7 @@ readonly struct SwitchMethodModel
     static SwitchMethodModel Create(ModelCreationContext context)
     {
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
 
         var sourceTextBuilder = representableTypes
             .Select((t, i) => (Type: t, Index: i))

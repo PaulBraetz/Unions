@@ -14,9 +14,9 @@ partial class UnionTypeSettingsAttribute : IEquatable<UnionTypeSettingsAttribute
         Layout == other.Layout &&
         DiagnosticsLevel == other.DiagnosticsLevel &&
         ConstructorAccessibility == other.ConstructorAccessibility &&
-        GenericTResultName == other.GenericTResultName &&
+        MatchTypeName == other.MatchTypeName &&
         GenericTValueName == other.GenericTValueName &&
-        GenericTSupersetName == other.GenericTSupersetName;
+        DowncastTypeName == other.DowncastTypeName;
 
     public Boolean IsReservedGenericTypeName(String name) => _reservedGenericTypeNames.Contains(name);
 
@@ -25,8 +25,8 @@ partial class UnionTypeSettingsAttribute : IEquatable<UnionTypeSettingsAttribute
         var hashCode = 304521224;
         hashCode = hashCode * -1521134295 + ToStringSetting.GetHashCode();
         hashCode = hashCode * -1521134295 + Layout.GetHashCode();
-        hashCode = hashCode * -1521134295 + GenericTResultName.GetHashCode();
-        hashCode = hashCode * -1521134295 + GenericTSupersetName.GetHashCode();
+        hashCode = hashCode * -1521134295 + MatchTypeName.GetHashCode();
+        hashCode = hashCode * -1521134295 + DowncastTypeName.GetHashCode();
         hashCode = hashCode * -1521134295 + GenericTValueName.GetHashCode();
         hashCode = hashCode * -1521134295 + DiagnosticsLevel.GetHashCode();
         hashCode = hashCode * -1521134295 + ConstructorAccessibility.GetHashCode();

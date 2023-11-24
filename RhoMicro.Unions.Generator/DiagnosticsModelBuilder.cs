@@ -40,6 +40,60 @@ sealed partial class DiagnosticsModelBuilder
     }
 
     #region Auto Diagnosers
+    private void DiagnoseBidirectionalRelation(TargetDataModel model)
+    {
+        var bidirectionalRelationNames = model.Annotations.Relations
+            .Select(r => r.ExtractData(model))
+            .Where(r => r.Annotations.Relations.Any(rr => SymbolEqualityComparer.Default.Equals(rr.RelatedTypeSymbol, model.Symbol)))
+            .Select(r => r.Symbol.Name);
+
+        if(!bidirectionalRelationNames.Any())
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+        foreach(var name in bidirectionalRelationNames)
+        {
+            var diagnostic = Diagnostics.BidirectionalRelation(location, name);
+            _ = Add(diagnostic);
+        }
+    }
+    private void DiagnoseDupicateRelation(TargetDataModel model)
+    {
+        var duplicateRelationNames = model.Annotations.Relations
+            .GroupBy(r => r.RelatedTypeSymbol, SymbolEqualityComparer.Default)
+            .Select(g => g.ToArray())
+            .Where(g => g.Length > 1)
+            .Select(g => g[0].RelatedTypeSymbol.Name);
+
+        if(!duplicateRelationNames.Any())
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+        foreach(var name in duplicateRelationNames)
+        {
+            var diagnostic = Diagnostics.DuplicateRelation(location, name);
+            _ = Add(diagnostic);
+        }
+    }
+    private void DiagnoseGenericRelation(TargetDataModel model)
+    {
+        var target = model.Symbol;
+        var relations = model.Annotations.Relations
+            .Where(r => r.RelatedTypeSymbol.IsGenericType);
+
+        if(!(target.IsGenericType && relations.Any()))
+        {
+            return;
+        }
+
+        var location = model.TargetDeclaration.GetLocation();
+        var diagnostic = Diagnostics.GenericRelation(location);
+        _ = Add(diagnostic);
+    }
     private void DiagnoseStorageSelectionViolations(TargetDataModel model)
     {
         var violations = model.Annotations.AllRepresentableTypes
@@ -81,7 +135,7 @@ sealed partial class DiagnosticsModelBuilder
     }
     private void DiagnoseSmallGenericUnion(TargetDataModel model)
     {
-        if(!model.TargetSymbol.IsGenericType ||
+        if(!model.Symbol.IsGenericType ||
             model.Annotations.Settings.Layout != LayoutSetting.Small)
         {
             return;
@@ -93,7 +147,7 @@ sealed partial class DiagnosticsModelBuilder
     }
     private void DiagnoseUnknownGenericParameterName(TargetDataModel model)
     {
-        var available = model.TargetSymbol.TypeParameters
+        var available = model.Symbol.TypeParameters
             .Select(p => p.Name)
             .ToImmutableHashSet();
         var unknowns = model.Annotations.AllRepresentableTypes
@@ -117,7 +171,7 @@ sealed partial class DiagnosticsModelBuilder
     }
     private void DiagnoseReservedGenericParameterName(TargetDataModel model)
     {
-        var collisions = model.TargetSymbol.TypeParameters
+        var collisions = model.Symbol.TypeParameters
             .Select(p => p.Name)
             .Where(model.Annotations.Settings.IsReservedGenericTypeName)
             .ToArray();
@@ -161,7 +215,7 @@ sealed partial class DiagnosticsModelBuilder
         var representableTypes = model.Annotations.AllRepresentableTypes;
 
         if(representableTypes.Count > 0 ||
-           !model.TargetSymbol
+           !model.Symbol
             .GetAttributes()
             .OfUnionTypeSettingsAttribute()
             .Any())
@@ -182,7 +236,7 @@ sealed partial class DiagnosticsModelBuilder
            attributes[0].Attribute.Options.HasFlag(UnionTypeOptions.ImplicitConversionIfSolitary))
         {
             var diagnostic = Diagnostics.ImplicitConversionOptionOnSolitary(
-                model.TargetSymbol.Name,
+                model.Symbol.Name,
                 attributes[0].Names.SimpleTypeName,
                 location);
             _ = Add(diagnostic);

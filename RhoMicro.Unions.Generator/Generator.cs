@@ -80,15 +80,16 @@ public sealed class Generator : IIncrementalGenerator
             .SelectCarry(
                 c => c.TargetData,
                 c => c.Diagnostics.Diagnose(c.Model, c.CancellationToken))
-            .SelectCarry((c, d, s, t) =>(Context: c, IsFirst: handledTargets.Add(c.TargetSymbol)))
+            .SelectCarry((c, d, s, t) => (Context: c, IsFirst: handledTargets.Add(c.Symbol)))
             .Where(c => !c.HasContext || c.Context.IsFirst)
             .SelectCarry((c, d, s, t) => c.Context)
             .SelectCarry(
-                c => c.TargetData.TargetSymbol,
+                c => c.TargetData.Symbol,
                 c => c.Source.SetTarget(c.Model));
 
         models = _projections.Invoke(models);
 
+        context.RegisterPostInitializationOutput(c => c.AddSource("Util.g.cs", ConstantSources.Util));
         context.RegisterSourceOutput(models, (c, sc) => sc.AddToContext(c));
     }
 }

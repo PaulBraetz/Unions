@@ -22,7 +22,7 @@ abstract partial class StorageStrategy
         private readonly String _fieldName;
 
         public override String GetConvertedInstanceVariableExpression(String targetType, String instance = "this") =>
-            $"(Util.UnsafeConvert<{FullTypeName}, {targetType}>({instance}.{_fieldName}))";
+            ConstantSources.UnsafeConvert(FullTypeName,targetType, $"{instance}.{_fieldName}");
         public override String GetInstanceVariableExpression(String instance = "this") =>
            $"({instance}.{_fieldName})";
         public override String GetInstanceVariableAssignmentExpression(String valueExpression, String instance = "this") =>

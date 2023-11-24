@@ -39,7 +39,7 @@ sealed class StrategySourceHost(TargetDataModel target)
     public void AddValueTypeVontainerInstanceFieldAndCtor(StorageStrategy strategy) =>
         _valueTypeFieldAdditions.Add((s) =>
         {
-            if(!_target.TargetSymbol.IsGenericType)
+            if(!_target.Symbol.IsGenericType)
             {
                 _ = s.AppendLine("[global::System.Runtime.InteropServices.FieldOffset(0)]");
             }
@@ -69,7 +69,7 @@ sealed class StrategySourceHost(TargetDataModel target)
         if(!_valueTypeContainerTypeRequired)
             return;
 
-        if(!_target.TargetSymbol.IsGenericType)
+        if(!_target.Symbol.IsGenericType)
         {
             _ = sourceTextBuilder.AppendLine(
                 "[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Explicit)]");

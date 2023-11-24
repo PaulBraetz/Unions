@@ -9,16 +9,21 @@ using RhoMicro.Unions;
 
 using System;
 
-readonly struct RepresentableTypeNames(
+sealed class RepresentableTypeNames(
     String fullTypeName,
     String openTypeName,
     String simpleTypeName,
-    String safeAlias)
+    String safeAlias,
+    String typeStringName)
 {
     public readonly String FullTypeName = fullTypeName;
     public readonly String OpenTypeName = openTypeName;
     public readonly String SimpleTypeName = simpleTypeName;
     public readonly String SafeAlias = safeAlias;
+    public readonly String TypeStringName = typeStringName;
+    public readonly String AsPropertyName = $"As{safeAlias}";
+    public readonly String IsPropertyName = $"Is{safeAlias}";
+    public readonly String CreateFromFunctionName = $"CreateFrom{safeAlias}";
 
     public static RepresentableTypeNames Create(UnionTypeAttribute attribute)
     {
@@ -43,8 +48,13 @@ readonly struct RepresentableTypeNames(
                 attribute.GenericRepresentableTypeName :
                 attribute.RepresentableTypeSymbol?.ToIdentifierCompatString()) ??
                 simpleTypeName;
+        var typeStringName =
+            (attribute.RepresentableTypeIsGenericParameter ?
+            attribute.GenericRepresentableTypeName :
+            attribute.RepresentableTypeSymbol?.ToTypeString()) ??
+            String.Empty;
 
-        var result = new RepresentableTypeNames(fullTypeName, openTypeName, simpleTypeName, safeAlias);
+        var result = new RepresentableTypeNames(fullTypeName, openTypeName, simpleTypeName, safeAlias, typeStringName);
 
         return result;
     }

@@ -21,20 +21,20 @@ readonly struct DownCastFunctionModel
     private static DownCastFunctionModel Create(ModelCreationContext context)
     {
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var settings = context.TargetData.Annotations.Settings;
 
         var sourceTextBuilder = new StringBuilder()
             .AppendLine("/// </inheritdoc>")
             .Append("public ")
-            .Append(settings.GenericTResultName)
+            .Append(settings.MatchTypeName)
             .Append(" DownCast<")
-            .Append(settings.GenericTResultName)
+            .Append(settings.MatchTypeName)
             .Append(">()")
             .AppendLine(" where ")
-            .Append(settings.GenericTResultName)
+            .Append(settings.MatchTypeName)
             .Append(" : global::RhoMicro.Unions.Abstractions.IUnion<")
-            .Append(settings.GenericTResultName)
+            .Append(settings.MatchTypeName)
             .Append(',')
             .AppendAggregateJoin(
                 ",",
@@ -46,7 +46,7 @@ readonly struct DownCastFunctionModel
         if(representableTypes.Count == 1)
         {
             _ = sourceTextBuilder.Append(" => ")
-                .Append(settings.GenericTResultName)
+                .Append(settings.MatchTypeName)
                 .Append(".Create<").AppendFull(representableTypes[0])
                 .Append(">(").Append(representableTypes[0].Storage.GetInstanceVariableExpression()).Append(')');
         } else
@@ -55,7 +55,7 @@ readonly struct DownCastFunctionModel
                 sourceTextBuilder.Append(" => __tag switch{"),
                 (b, a) => b.Append(a.CorrespondingTag)
                     .Append(" => ")
-                    .Append(settings.GenericTResultName)
+                    .Append(settings.MatchTypeName)
                     .Append(".Create<").AppendFull(a)
                     .Append(">(").Append(a.Storage.GetInstanceVariableExpression()).Append(')')
                     .AppendLine(","))

@@ -17,6 +17,8 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
     public readonly IReadOnlyList<RepresentableTypeData> RepresentablePureValueTypes;
     public readonly IReadOnlyList<RepresentableTypeData> AllRepresentableValueTypes;
     public readonly IReadOnlyList<RepresentableTypeData> RepresentableUnknownTypes;
+
+    public readonly IReadOnlyList<RelationAttribute> Relations;
     public readonly UnionTypeSettingsAttribute Settings;
 
     private AnnotationDataModel(
@@ -25,9 +27,12 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
         IReadOnlyList<RepresentableTypeData> representableReferenceTypes,
         IReadOnlyList<RepresentableTypeData> representableUnknownTypes,
         IReadOnlyList<RepresentableTypeData> representablePureValueTypes,
-        IReadOnlyList<RepresentableTypeData> representableMixedValueTypes)
+        IReadOnlyList<RepresentableTypeData> representableMixedValueTypes,
+        IReadOnlyList<RelationAttribute> relations)
     {
         Settings = settings;
+        Relations = relations;
+
         AllRepresentableTypes = allRepresentableTypes;
         RepresentableReferenceTypes = representableReferenceTypes;
         RepresentableUnknownTypes = representableUnknownTypes;
@@ -80,8 +85,11 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
             target.ContainingAssembly.GetAttributes().OfUnionTypeSettingsAttribute().SingleOrDefault() ??
             new UnionTypeSettingsAttribute();
 
+        var relations = attributes.OfRelationAttribute().ToList();
+
         var result = new AnnotationDataModel(
             settings: settings,
+            relations: relations,
             allRepresentableTypes: allRepresentableTypes,
             representableReferenceTypes: representableReferenceTypes,
             representablePureValueTypes: representablePureValueTypes,
@@ -96,11 +104,13 @@ sealed class AnnotationDataModel : IEquatable<AnnotationDataModel>
     public Boolean Equals(AnnotationDataModel other) =>
         other is not null &&
         other.AllRepresentableTypes.SequenceEqual(AllRepresentableTypes) &&
+        other.Relations.SequenceEqual(Relations) &&
         other.Settings.Equals(Settings);
 
     public override Int32 GetHashCode()
     {
         var hashCode = AllRepresentableTypes.Aggregate(-40951477, (h, a) => h * -1521134295 + a.GetHashCode());
+        hashCode = Relations.Aggregate(hashCode, (h, a) => h * -1521134295 + a.GetHashCode());
         hashCode = hashCode * -1521134295 + Settings.GetHashCode();
 
         return hashCode;

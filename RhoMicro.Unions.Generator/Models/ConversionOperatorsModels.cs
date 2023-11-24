@@ -7,7 +7,9 @@ using RhoMicro.Unions.Generator;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 
 readonly struct ConversionOperatorsModel
@@ -25,11 +27,15 @@ readonly struct ConversionOperatorsModel
 
     private static ConversionOperatorsModel Create(ModelCreationContext context)
     {
-        var parameters = context.TargetData;
+        var target = context.TargetData;
         var omissions = context.TargetData.OperatorOmissions.AllOmissions;
-        var models = parameters.Annotations.AllRepresentableTypes
+        var models = target.Annotations.AllRepresentableTypes
             .Where(a => !omissions.Contains(a))
-            .Select(attribute => ConversionOperatorModel.Create(attribute, parameters));
+            .Select(attribute => ConversionOperatorModel.Create(attribute, target))
+            .Concat(target.Annotations.Relations
+                .Select(r => r.ExtractData(context.TargetData))
+                .Select(r => ConversionOperatorModel.Create(r, target)))
+            .ToArray();
 
         var result = new ConversionOperatorsModel(models);
 
@@ -47,7 +53,7 @@ readonly struct ConversionOperatorModel
         RepresentableTypeData representableType,
         TargetDataModel data)
     {
-        var target = data.TargetSymbol;
+        var target = data.Symbol;
         var allAttributes = data.Annotations.AllRepresentableTypes;
 
         if(representableType.Attribute.RepresentableTypeIsGenericParameter &&
@@ -115,6 +121,105 @@ readonly struct ConversionOperatorModel
 
         var sourceText = sourceTextBuilder.ToString();
         var result = new ConversionOperatorModel(sourceText);
+
+        return result;
+    }
+    public static ConversionOperatorModel Create(
+        RelationTypeData relation,
+        TargetDataModel target)
+    {
+        var sourceText = CreateRelationConversion(relation, target);
+        var result = new ConversionOperatorModel(sourceText);
+
+        return result;
+    }
+
+    private static String CreateRelationConversion(RelationTypeData relation, TargetDataModel target)
+    {
+        var relationType = relation.RelationType;
+
+        if(relationType is RelationType.None)
+        {
+            return String.Empty;
+        }
+
+        var relationTypeSet = relation.Annotations.AllRepresentableTypes
+            .Select(t => t.Names.FullTypeName)
+            .ToImmutableHashSet();
+        //we need two maps because each defines different access to the corresponding AsXX etc. properties
+        var targetTypeMap = target.Annotations.AllRepresentableTypes
+            .Where(t => relationTypeSet.Contains(t.Names.FullTypeName))
+            .ToDictionary(t => t.Names.FullTypeName);
+        var relationTypeMap = relation.Annotations.AllRepresentableTypes
+            .Where(t => targetTypeMap.ContainsKey(t.Names.FullTypeName))
+            .ToDictionary(t => t.Names.FullTypeName);
+
+        //conversion to target from relation
+        //public static _plicit operator Target(Relation relatedUnion)
+        var sourceTextBuilder = new StringBuilder()
+            .Append("#region ")
+            .Append(relationType switch
+            {
+                RelationType.Congruent => "Congruency with ",
+                RelationType.Intersection => "Intersection with ",
+                RelationType.Superset => "Superset of ",
+                RelationType.Subset => "Subset of ",
+                _ => "Relation"
+            })
+            .AppendLine(relation.Symbol.Name)
+            .Append("public static ")
+            .Append(
+            relationType is RelationType.Congruent or RelationType.Superset ?
+                "im" :
+                "ex")
+            .Append("plicit operator ")
+            .Append(target.Symbol.Name)
+            .Append('(')
+            .AppendFull(relation.Symbol)
+            .AppendLine(" relatedUnion) =>");
+
+        _ = targetTypeMap.Count == 1 ?
+            sourceTextBuilder.AppendUnknownConversion(
+                target,
+                relationTypeMap.Single().Value,
+                targetTypeMap.Single().Value,
+                "relatedUnion").AppendLine() :
+            sourceTextBuilder.AppendTypeSwitchExpression(
+                targetTypeMap,
+                ConstantSources.GetFullString("relatedUnion.RepresentedType"),
+                t => t.Value.Names.TypeStringName,
+                (b, t) => b.AppendUnknownConversion(target, relationTypeMap[t.Key], t.Value, "relatedUnion"),
+                b => b.AppendLine(ConstantSources.InvalidConversionThrow($"typeof({target.Symbol.ToFullString()})")))
+            .AppendLine(";");
+
+        //conversion to relation from target
+        //public static _plicit operator Relation(Target relatedUnion)
+        _ = sourceTextBuilder.Append("public static ")
+            .Append(
+            relationType is RelationType.Congruent or RelationType.Subset ?
+            "im" :
+            "ex")
+            .Append("plicit operator ")
+            .AppendFull(relation.Symbol)
+            .Append('(')
+            .Append(target.Symbol.Name)
+            .AppendLine(" union) => ");
+
+        _ = relationTypeMap.Count == 1 ?
+            sourceTextBuilder.AppendKnownConversion(
+                relation,
+                targetTypeMap.Single().Value,
+                relationTypeMap.Single().Value,
+                "union").AppendLine() :
+            sourceTextBuilder.AppendSwitchExpression(
+                relationTypeMap,
+                b => b.Append("union.__tag"),
+                (b, t) => b.Append(targetTypeMap[t.Key].CorrespondingTag),
+                (b, t) => b.AppendKnownConversion(relation, targetTypeMap[t.Key], t.Value, "union"),
+                b => b.AppendLine(ConstantSources.InvalidConversionThrow($"typeof({relation.Symbol.ToFullString()})")))
+            .AppendLine(";");
+
+        var result = sourceTextBuilder.AppendLine("#endregion").ToString();
 
         return result;
     }

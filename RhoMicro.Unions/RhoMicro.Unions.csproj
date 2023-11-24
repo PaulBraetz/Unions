@@ -19,7 +19,7 @@
 		</Description>
 		<Copyright>2023</Copyright>
 		<PackageTags>Source Generator; Union Types; Unions</PackageTags>
-		<Version>0.0.0-alpha.3</Version>
+		<Version>0.0.0-alpha.4</Version>
 		<PackageId>RhoMicro.Unions.Attributes</PackageId>
 		<Company>RhoMicro</Company>
 		<PackageProjectUrl>https://github.com/PaulBraetz/Unions/</PackageProjectUrl>

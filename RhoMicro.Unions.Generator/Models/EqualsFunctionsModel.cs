@@ -23,7 +23,7 @@ readonly struct EqualsFunctionsModel
 
     private static EqualsFunctionsModel Create(ModelCreationContext context)
     {
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var attributes = context.TargetData.Annotations;
 
         var sourceTextBuilder = new StringBuilder("public override Boolean Equals(Object obj) => obj is ")

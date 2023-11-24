@@ -17,7 +17,7 @@ abstract partial class StorageStrategy
         : StorageStrategy(safeAlias, fullTypeName, selectedOption, typeNature, violation)
     {
         public override String GetConvertedInstanceVariableExpression(String targetType, String instance = "this") =>
-            $"(Util.UnsafeConvert<{FullTypeName}, {targetType}>({instance}.__valueTypeContainer.{SafeAlias}))";
+            ConstantSources.UnsafeConvert(FullTypeName, targetType, $"{instance}.__valueTypeContainer.{SafeAlias}");
         public override String GetInstanceVariableExpression(String instance = "this") =>
            $"({instance}.__valueTypeContainer.{SafeAlias})";
         public override String GetInstanceVariableAssignmentExpression(String valueExpression, String instance = "this") =>

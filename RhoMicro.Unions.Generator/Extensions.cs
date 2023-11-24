@@ -24,8 +24,7 @@ internal static partial class Extensions
         }
     }
 
-    private static readonly IDictionary<ITypeSymbol, Boolean?> _valueTypeCache =
-        new Dictionary<ITypeSymbol, Boolean?>(SymbolEqualityComparer.Default);
+    private static readonly Dictionary<ITypeSymbol, Boolean?> _valueTypeCache = new(SymbolEqualityComparer.Default);
     public static Boolean IsPureValueType(this ITypeSymbol symbol)
     {
         evaluate(symbol);
@@ -165,9 +164,8 @@ internal static partial class Extensions
                     SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
                     (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue))
                     .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters));
-    public static String ToFullString(this ISymbol symbol)
-    {
-        var format = SymbolDisplayFormat.FullyQualifiedFormat
+    private static readonly SymbolDisplayFormat _fullStringFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat
                     .WithMiscellaneousOptions(
                     /*
                         get rid of special types
@@ -191,21 +189,46 @@ internal static partial class Extensions
                     SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
                     (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue))
                     .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters);
+    public static String ToFullString(this ISymbol symbol) => symbol.ToDisplayString(_fullStringFormat);
+    private static readonly SymbolDisplayFormat _toTypeStringFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat
+                    .WithMiscellaneousOptions(
+                    /*
+                        get rid of special types
 
-        return symbol.ToDisplayString(format);
-    }
+                             10110
+                        NAND 00100
+                          => 10010
+
+                             10110
+                          &! 00100
+                          => 10010
+
+                             00100
+                           ^ 11111
+                          => 11011
+
+                             10110
+                           & 11011
+                          => 10010
+                    */
+                    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions &
+                    (SymbolDisplayMiscellaneousOptions.UseSpecialTypes ^ (SymbolDisplayMiscellaneousOptions)Int32.MaxValue))
+                    .WithGenericsOptions(SymbolDisplayGenericsOptions.IncludeTypeParameters)
+                    .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
+    public static String ToTypeString(this ITypeSymbol symbol) => symbol.ToDisplayString(_toTypeStringFormat);
 
     public static StringBuilder AppendOpen(this StringBuilder builder, RepresentableTypeData data) =>
         builder.Append(data.Names.OpenTypeName);
-    public static StringBuilder AppendOpen(this StringBuilder builder, INamedTypeSymbol symbol) =>
+    public static StringBuilder AppendOpen(this StringBuilder builder, ISymbol symbol) =>
         builder.Append(symbol.ToOpenString());
     public static StringBuilder AppendCommentRef(this StringBuilder builder, RepresentableTypeData data) =>
         builder.Append(data.DocCommentRef);
     public static StringBuilder AppendCommentRef(this StringBuilder builder, TargetDataModel data) =>
-        builder.AppendCommentRef(data.TargetSymbol);
-    public static StringBuilder AppendCommentRef(this StringBuilder builder, INamedTypeSymbol symbol) =>
+        builder.AppendCommentRef(data.Symbol);
+    public static StringBuilder AppendCommentRef(this StringBuilder builder, ISymbol symbol) =>
         builder.Append("<see cref=\"").Append(symbol.ToFullString().Replace('<', '{').Replace('>', '}')).Append("\"/>");
-    public static StringBuilder AppendFull(this StringBuilder builder, INamedTypeSymbol symbol) =>
+    public static StringBuilder AppendFull(this StringBuilder builder, ISymbol symbol) =>
         builder.Append(symbol.ToFullString());
     public static StringBuilder AppendFull(this StringBuilder builder, RepresentableTypeData data) =>
         builder.Append(data.Names.FullTypeName);
@@ -291,6 +314,102 @@ internal static partial class Extensions
 
         return $"__{result}";
     }
+    public static StringBuilder AppendSwitchExpression<T>(
+    this StringBuilder builder,
+    IReadOnlyCollection<T> values,
+    Func<StringBuilder, StringBuilder> valueBuilder,
+    Func<StringBuilder, T, StringBuilder> caseBuilder,
+    Func<StringBuilder, T, StringBuilder> bodyBuilder,
+    Func<StringBuilder, StringBuilder> defaultBodyBuilder) =>
+   defaultBodyBuilder.Invoke(
+       valueBuilder.Invoke(builder)
+       .AppendLine(" switch")
+       .AppendLine("{")
+       .AppendAggregate(
+           values,
+           (b, v) => bodyBuilder.Invoke(
+               caseBuilder.Invoke(b, v).Append(" => "),
+               v).AppendLine(","))
+       .Append("_ => "))
+    .AppendLine("}");
+    public static StringBuilder AppendTypeSwitchExpression<T>(
+    this StringBuilder builder,
+    IReadOnlyCollection<T> values,
+    String valueTypeExpression,
+    Func<T, String> caseBuilder,
+    Func<StringBuilder, T, StringBuilder> bodyBuilder,
+    Func<StringBuilder, StringBuilder> defaultBodyBuilder) =>
+    builder.AppendSwitchExpression(
+        values,
+        b => b.Append(valueTypeExpression),
+        (b, v) => b.Append('"').Append(caseBuilder.Invoke(v)).Append('"'),
+        bodyBuilder,
+        defaultBodyBuilder);
+    public static StringBuilder AppendSwitchStatement<T>(
+        this StringBuilder builder,
+        IReadOnlyCollection<T> values,
+        Func<StringBuilder, StringBuilder> valueBuilder,
+        Func<StringBuilder, T, StringBuilder> caseBuilder,
+        Func<StringBuilder, T, StringBuilder> bodyBuilder,
+        Func<StringBuilder, StringBuilder> defaultBodyBuilder) =>
+        defaultBodyBuilder.Invoke(
+            valueBuilder.Invoke(
+                builder.Append("switch("))
+            .AppendLine("\"")
+            .AppendLine("{")
+            .AppendAggregate(
+                values,
+                (b, v) => bodyBuilder.Invoke(
+                    caseBuilder.Invoke(
+                        b.Append("case "), v)
+                    .AppendLine(":")
+                    .AppendLine("{"),
+                    v)
+                .AppendLine("}"))
+            .AppendLine())
+        .AppendLine("}");
+    public static StringBuilder AppendTypeSwitchStatement<T>(
+    this StringBuilder builder,
+    IReadOnlyCollection<T> values,
+    String valueTypeExpression,
+    Func<T, ITypeSymbol> caseBuilder,
+    Func<StringBuilder, T, StringBuilder> bodyBuilder,
+    Func<StringBuilder, StringBuilder> defaultBodyBuilder) =>
+    builder.AppendSwitchStatement(
+        values,
+        b => b.Append(valueTypeExpression),
+        (b, v) => b.Append('"').AppendFull(caseBuilder.Invoke(v)).Append('"'),
+        bodyBuilder,
+        defaultBodyBuilder);
+
+    public static StringBuilder AppendUnknownConversion(
+        this StringBuilder builder,
+        UnionDataModel targetUnionType,
+        RepresentableTypeData sourceData,
+        RepresentableTypeData targetData,
+        String parameterName) =>
+        builder.Append('(')
+            .AppendFull(targetUnionType.Symbol)
+            .Append('.')
+            .Append(targetData.Names.CreateFromFunctionName)
+            .Append('(')
+            .Append(parameterName)
+            .Append('.')
+            .Append(sourceData.Names.AsPropertyName)
+            .Append("))");
+    public static StringBuilder AppendKnownConversion(
+        this StringBuilder builder,
+        UnionDataModel targetUnionType,
+        RepresentableTypeData sourceData,
+        RepresentableTypeData targetData,
+        String parameterName) =>
+        builder.Append('(')
+            .AppendFull(targetUnionType.Symbol)
+            .Append('.')
+            .Append(targetData.Names.CreateFromFunctionName)
+            .Append('(')
+            .Append(sourceData.Storage.GetInstanceVariableExpression(parameterName))
+            .Append("))");
 
     public static StringBuilder AppendJoin<T>(this StringBuilder builder, String separator, IEnumerable<T> values)
     {

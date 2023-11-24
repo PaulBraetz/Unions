@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 
 using System;
+using System.Linq;
 using System.Text;
 
 readonly struct FactoryFunctionsModel
@@ -19,7 +20,7 @@ readonly struct FactoryFunctionsModel
     private static FactoryFunctionsModel Create(ModelCreationContext context)
     {
         var representableTypes = context.TargetData.Annotations.AllRepresentableTypes;
-        var target = context.TargetData.TargetSymbol;
+        var target = context.TargetData.Symbol;
         var settings = context.TargetData.Annotations.Settings;
 
         var sourceText = new StringBuilder()
@@ -32,7 +33,7 @@ readonly struct FactoryFunctionsModel
                     /// <summary>
                     /// Creates a new instance of <see cref="{{target.ToDocCompatString()}}"/>.
                     /// </summary>
-                    public static {{target.ToOpenString()}} CreateFrom{{a.Names.SafeAlias}}({{a.Names.FullTypeName}} value) => new(value);
+                    public static {{target.ToOpenString()}} {{a.Names.CreateFromFunctionName}}({{a.Names.FullTypeName}} value) => new(value);
                     """))
             .AppendLine("/// </inheritdoc>")
             .Append("public static Boolean TryCreate<")
@@ -46,10 +47,10 @@ readonly struct FactoryFunctionsModel
                 representableTypes,
                 (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
                 .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
-                .AppendLine("instance = new(Util.UnsafeConvert<")
-                .Append(settings.GenericTValueName)
-                .Append(',').AppendFull(t)
-                .Append(">(value));return true;"))
+                .Append("instance = new(")
+                .Append(ConstantSources.UnsafeConvert(settings.GenericTValueName, t.Names.FullTypeName, "value"))
+                .Append(')')
+                .Append(";return true;"))
             .AppendLine("default: instance = default; return false;}}")
             .AppendLine("/// </inheritdoc>")
             .Append("public static ").AppendOpen(target).AppendLine(" Create<")
@@ -63,9 +64,9 @@ readonly struct FactoryFunctionsModel
                 representableTypes,
                 (b, t) => b.Append("case Type ").Append(t.Names.SafeAlias).Append("Type when ")
                 .Append(t.Names.SafeAlias).Append("Type == typeof(").AppendFull(t).Append("):")
-                .AppendLine("return new(Util.UnsafeConvert<")
-            .Append(settings.GenericTValueName)
-            .Append(',').AppendFull(t).Append(">(value));"))
+                .Append("return new(")
+                .Append(ConstantSources.UnsafeConvert(settings.GenericTValueName, t.Names.FullTypeName, "value"))
+                .Append(");"))
             .Append("default: ").Append(ConstantSources.InvalidCreationThrow($"\"{target.ToOpenString()}\"", "value"))
             .AppendLine(";}}")
             .ToString();

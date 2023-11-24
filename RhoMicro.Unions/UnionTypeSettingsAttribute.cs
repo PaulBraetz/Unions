@@ -102,11 +102,11 @@ public sealed partial class UnionTypeSettingsAttribute : Attribute
     /// Initializes a new instance.
     /// </summary>
     public UnionTypeSettingsAttribute() => _reservedGenericTypeNames =
-        [_genericTValueName, _genericTSupersetName, _genericTResultType];
+        [_genericTValueName, _downcastTypeName, _matchTypeName];
 
     private String _genericTValueName = "TValue";
-    private String _genericTSupersetName = "TSuperset";
-    private String _genericTResultType = "TResult";
+    private String _downcastTypeName = "TSuperset";
+    private String _matchTypeName = "TResult";
 
     /// <summary>
     /// Gets or sets a setting defining how to generate an implementation <see cref="Object.ToString"/>.
@@ -137,19 +137,19 @@ public sealed partial class UnionTypeSettingsAttribute : Attribute
     /// Gets or sets the name of the generic parameter for the <c>DownCast</c> method. 
     /// Set this property in order to avoid name collisions with generic union type parameters
     /// </summary>
-    public String GenericTSupersetName
+    public String DowncastTypeName
     {
-        get => _genericTSupersetName;
-        set => SetReservedName(ref _genericTSupersetName, value);
+        get => _downcastTypeName;
+        set => SetReservedName(ref _downcastTypeName, value);
     }
     /// <summary>
     /// Gets or sets the name of the generic parameter for the <c>Match</c> method. 
     /// Set this property in order to avoid name collisions with generic union type parameters
     /// </summary>
-    public String GenericTResultName
+    public String MatchTypeName
     {
-        get => _genericTResultType;
-        set => SetReservedName(ref _genericTResultType, value);
+        get => _matchTypeName;
+        set => SetReservedName(ref _matchTypeName, value);
     }
     private void SetReservedName(ref String field, String newValue)
     {
