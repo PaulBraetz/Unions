@@ -66,21 +66,18 @@ internal class Program
     }
 }
 
-[UnionType(typeof(String), Alias = "ErrorMessage")]
-[UnionType(nameof(TResult), Alias = "Result")]
-[UnionTypeSettings(MatchTypeName = "TMatchResult")]
-readonly partial struct Result<TResult>;
+[UnionType(typeof(Int32), Storage = StorageOption.Field)]
+[UnionTypeSettings(DowncastTypeName = "", MatchTypeName = "", GenericTValueName = "")]
+readonly partial struct WrapperUnion;
 
-[UnionType(typeof(DateTime), Alias = "UnionDateTime")]
-[UnionType(typeof(String), Alias = "UnionString")]
-[UnionType(typeof(Double), Alias = "UnionDouble")]
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
 [Relation(typeof(CongruentUnion))]
 [Relation(typeof(SubsetUnion))]
 [Relation(typeof(SupersetUnion))]
 [Relation(typeof(IntersectionUnion))]
-readonly partial struct Union
-{
-}
+readonly partial struct Union;
 
 [UnionType(typeof(Double))]
 [UnionType(typeof(DateTime))]
@@ -95,7 +92,7 @@ partial class SubsetUnion;
 [UnionType(typeof(String))]
 [UnionType(typeof(Double))]
 [UnionType(typeof(Int32))]
-partial class SupersetUnion;
+partial struct SupersetUnion;
 
 [UnionType(typeof(Int16))]
 [UnionType(typeof(String))]

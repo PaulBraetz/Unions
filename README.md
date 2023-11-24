@@ -27,10 +27,247 @@ CLI:
 dotnet add package RhoMicro.Unions
 ```
 
-## Short How To
+## How To Use
 
+Annotate your union type with the `UnionType` attribute:
 ```cs
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
+readonly partial struct Union;
+```
 
+Use your union type:
+```cs
+Union u = "Hello, World!";
+u = 32;
+```
+
+### Available attributes and instructions:
+
+#### `UnionTypeAttribute`
+
+- `representableType`: Instruct the generator on the kind of representable type:
+```cs
+[UnionType(representableType: typeof(String))]
+[UnionType(representableType: typeof(Double))]
+readonly partial struct Union;
+```
+
+- `genericRepresentableTypeName`: use `nameof(T)` to use generic parameters as representable types (this will likely change in the future):
+```cs
+[UnionType(genericRepresentableTypeName:nameof(T))]
+readonly partial struct Result<T>;
+```
+
+- `Alias`: define aliae for generated members, e.g.: 
+```cs
+Names n = "John";
+if(n.IsSingleName){
+    //...
+}else if(n.IsMultipleNames){
+    //...
+}
+[UnionType(typeof(List<String>), Alias = "MultipleNames")]
+[UnionType(typeof(String), Alias = "SingleName")]
+readonly partial struct Names;
+```
+
+- `Options`: define miscellaneous behaviour for the represented type:
+```cs
+/*
+Instructs the generator to emit a superset conversion operator implementation even
+the representable type is a generic type parameter. By default, it is omitted because of possible
+unification for certain generic arguments.
+*/
+[UnionType(genericRepresentableTypeName:nameof(T), Alias = "Result", Options = UnionTypeOptions.SupersetOfParameter)]
+readonly partial struct Result<T>;
+```
+```cs
+/*
+Instructs the generator to emit a superset conversion operator implementation even
+the representable type is a generic type parameter. By default, it is omitted because of possible
+unification for certain generic arguments.
+*/
+[UnionType(typeof(Int32), Options = UnionTypeOptions.ImplicitConversionIfSolitary)]
+readonly partial struct Union;
+```
+
+- `Storage`: optimize the generated storage implementation for the representable type against boxing or size constraints:
+```cs
+public enum StorageOption
+{
+    // The generator will automatically decide on a storage strategy.
+
+    // If the representable type is known to be a value type,
+    // this will store values of that type inside a shared value type container.
+    // Boxing will not occur.
+
+    // If the representable type is known to be a reference type,
+    // this will store values of that type inside a shared reference type container.
+
+    // If the representable type is neither known to be a reference type
+    // nor a value type, this option will cause values of that type to 
+    // be stored inside a shared reference type container.
+    // If the representable type is a generic type parameter,
+    // boxing will occur for value type arguments to that parameter.
+    Auto,
+
+    // The generator will always store values of the representable type
+    // inside a shared reference type container.
+
+    // If the representable type is known to be a value type,
+    // boxing will occur.
+
+    // If the representable type is a generic type parameter,
+    // boxing will occur for value type arguments to that parameter.
+    Reference,
+
+    // The generator will attempt to store values of the representable type
+    // inside a value type container.
+
+    // If the representable type is known to be a value type,
+    // this will store values of that type inside a shared value type container.
+    // Boxing will not occur.
+
+    // If the representable type is known to be a reference type,
+    // this will store values of that type inside a shared reference type container.
+    // Boxing will not occur.
+
+    // If the representable type is neither known to be a reference type
+    // nor a value type, this option will cause values of that type to 
+    // be stored inside a shared value type container.
+    // If the representable type is a generic type parameter,
+    // an exception of type TypeLoadException will occur for
+    // reference type arguments to that parameter.
+    Value,
+
+    // The generator will attempt to store values of the representable type
+    // inside a dedicated container for that type.
+
+    // If the representable type is known to be a value type,
+    // this will store values of that type inside a dedicated 
+    // value type container.
+    // Boxing will not occur.
+
+    // If the representable type is known to be a reference type,
+    // this will store values of that type inside a 
+    // dedicated reference type container.
+
+    // If the representable type is neither known to be a reference type
+    // nor a value type, this option will cause values of that type to 
+    // be stored inside a dedicated strongly typed container.
+    // Boxing will not occur.
+    Field
+}
+```
+
+#### `UnionTypeSettingsAttribute`
+
+This attribute may target either a union type or an assembly. When targeting a union type, it defines settings specific to that type. If, however, the attribute is annotating an assembly, it supplies the default settings for every union type in that assembly.
+
+- `ConstructorAccessibility`: define the accessibility of generated constructors:
+```cs
+public enum ConstructorAccessibilitySetting
+{
+    // Generated constructors should always be private, unless
+    // no conversion operators are generated for the type they
+    // accept. This would be the case for interface types or
+    // supertypes of the target union.
+    PublicIfInconvertible,
+    // Generated constructors should always be private.
+    Private,
+    // Generated constructors should always be public
+    Public
+}
+```
+
+- `DiagnosticsLevel`: define the reporting of diagnostics:
+```cs
+[Flags]
+public enum DiagnosticsLevelSettings
+{
+    // Instructs the analyzer to report info diagnostics.
+    Info = 0x01,
+    // Instructs the analyzer to report warning diagnostics.
+    Warning = 0x02,
+    // Instructs the analyzer to report error diagnostics.
+    Error = 0x04,
+    // Instructs the analyzer to report all diagnostics.
+    All = Info + Warning + Error
+}
+```
+
+- `ToStringSetting`: define how implementations of `ToString` should be generated:
+```cs
+public enum ToStringSetting
+{
+    // The generator will emit an implementation that returns detailed information, including:
+    // - the name of the union type
+    // - a list of types representable by the union type
+    // - an indication of which type is being represented by the instance
+    // - the value currently being represented by the instance
+    Detailed,
+    // The generator will not generate an implementation of ToString.
+    None,
+    // The generator will generate an implementation that returns the result of
+    // calling ToString on the currently represented value.
+    Simple
+}
+```
+
+- Generic Names: define how generic type parameter names should be generated:
+```cs
+// Gets or sets the name of the generic parameter for generic Is, As and factory methods. 
+// Set this property in order to avoid name collisions with generic union type parameters
+public String GenericTValueName { get; set; }
+// Gets or sets the name of the generic parameter for the DownCast method. 
+// Set this property in order to avoid name collisions with generic union type parameters
+public String DowncastTypeName { get; set; }
+// Gets or sets the name of the generic parameter for the Match method. 
+// Set this property in order to avoid name collisions with generic union type parameters
+public String MatchTypeName { get; set; }
+```
+
+#### `RelationAttribute`
+
+This attribute defines a relation between the targeted union type the supplied type. The following relations are available:
+- `None`
+- `Congruent`
+- `Superset`
+- `Subset`
+- `Intersection`
+
+The generator will automatically detect the relation between two union types. The only requirement is for one of the two types to be annotated with the `RelationAttribute`:
+```cs
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
+[Relation(typeof(CongruentUnion))]
+[Relation(typeof(SubsetUnion))]
+[Relation(typeof(SupersetUnion))]
+[Relation(typeof(IntersectionUnion))]
+readonly partial struct Union;
+
+[UnionType(typeof(Double))]
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+sealed partial class CongruentUnion;
+
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+partial class SubsetUnion;
+
+[UnionType(typeof(DateTime))]
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
+[UnionType(typeof(Int32))]
+partial struct SupersetUnion;
+
+[UnionType(typeof(Int16))]
+[UnionType(typeof(String))]
+[UnionType(typeof(Double))]
+[UnionType(typeof(List<Byte>))]
+partial class IntersectionUnion;
 ```
 
 ## Contrived Example
