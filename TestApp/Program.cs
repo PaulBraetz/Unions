@@ -51,7 +51,6 @@ internal class Program
 }
 
 [UnionType(typeof(Int32), Storage = StorageOption.Field)]
-[UnionTypeSettings(DowncastTypeName = "", MatchTypeName = "", GenericTValueName = "")]
 readonly partial struct WrapperUnion;
 
 [UnionType(typeof(DateTime))]
