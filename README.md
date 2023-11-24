@@ -26,13 +26,17 @@ Requirements: `net7` (due to `static abstract` members)
 
 Package Reference:
 ```
-<PackageReference Include="RhoMicro.Unions" Version="0.0.0-alpha.16">
-  <PrivateAssets>all</PrivateAssets>
-  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-</PackageReference>
+	<ItemGroup>
+	  <PackageReference Include="RhoMicro.Unions.Attributes" Version="0.0.0-alpha.4" />
+	  <PackageReference Include="RhoMicro.Unions" Version="0.0.0-alpha.16">
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	    <PrivateAssets>all</PrivateAssets>
+	  </PackageReference>
+	</ItemGroup>
 ```
 CLI:
 ```
+dotnet add package RhoMicro.Unions.Attributes
 dotnet add package RhoMicro.Unions
 ```
 
@@ -47,8 +51,9 @@ readonly partial struct Union;
 
 Use your union type:
 ```cs
-Union u = "Hello, World!";
-u = 32;
+Union u = "Hello, World!"; //implicitly converted
+u = 32; //implicitly converted
+u = false; //CS0029	Cannot implicitly convert type 'bool' to 'Union'
 ```
 
 ### Available attributes and instructions:
