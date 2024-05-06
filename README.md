@@ -1,3 +1,5 @@
+# This Repo Is Obsoleted By: https://github.com/PaulBraetz/RhoMicro.CodeAnalysis/tree/release/UnionsGenerator
+
 # Unions
 
 Read about union types here: https://en.wikipedia.org/wiki/Union_type
